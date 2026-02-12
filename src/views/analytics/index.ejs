@@ -1,0 +1,317 @@
+<%- include('../partials/header') %>
+
+    <div class="-m-6 p-6 min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-800 dark:text-slate-200 font-sans">
+        <!-- Header -->
+        <div class="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+            <div>
+                <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Revenue Analytics</h1>
+                <p class="text-xs text-slate-500 mt-2 font-black uppercase tracking-widest">Global Payouts & Yield
+                    Monitoring</p>
+            </div>
+            <div class="flex items-center gap-6">
+                <!-- Range Selector -->
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Range</span>
+                    <select
+                        onchange="const url = new window.URL(window.location); url.searchParams.set('range', this.value); window.location = url.href;"
+                        class="bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700/50 rounded-2xl px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer shadow-sm hover:border-indigo-500/50">
+                        <option value="today" <%=currentRange==='today' ? 'selected' : '' %>>Today</option>
+                        <option value="7d" <%=currentRange==='7d' ? 'selected' : '' %>>7 Days</option>
+                        <option value="30d" <%=currentRange==='30d' ? 'selected' : '' %>>30 Days</option>
+                        <option value="3m" <%=currentRange==='3m' ? 'selected' : '' %>>3 Months</option>
+                        <option value="6m" <%=currentRange==='6m' ? 'selected' : '' %>>6 Months</option>
+                        <option value="all" <%=currentRange==='all' ? 'selected' : '' %>>All Time</option>
+                    </select>
+                </div>
+                <div class="bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-xl">
+                    <span
+                        class="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest block leading-none mb-1">Live
+                        Sync</span>
+                    <span class="text-sm font-black text-slate-900 dark:text-white">
+                        <%= new Date().toLocaleDateString() %>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <!-- Total Revenue -->
+            <div
+                class="bg-white dark:bg-[#1e293b] rounded-[2.5rem] p-8 border border-slate-300 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+                <div
+                    class="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl group-hover:bg-emerald-500/10 transition-all">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <span
+                            class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Global
+                            Yield</span>
+                        <div
+                            class="bg-emerald-500/10 p-2.5 rounded-2xl border border-emerald-500/20 text-emerald-600 dark:text-emerald-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-2">₹<%=
+                            stats.totalRevenue.toLocaleString('en-IN') %>
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">Active
+                            Payout</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Revenue -->
+            <div
+                class="bg-white dark:bg-[#1e293b] rounded-[2.5rem] p-8 border border-slate-300 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+                <div
+                    class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <span
+                            class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Platform
+                            (10%)</span>
+                        <div
+                            class="bg-blue-500/10 p-2.5 rounded-2xl border border-blue-500/20 text-blue-600 dark:text-blue-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-2">₹<%=
+                            stats.platformRevenue.toLocaleString('en-IN') %>
+                    </h3>
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Net Operating Income</p>
+                </div>
+            </div>
+
+            <!-- Customer Revenue -->
+            <div
+                class="bg-white dark:bg-[#1e293b] rounded-[2.5rem] p-8 border border-slate-300 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+                <div
+                    class="absolute -top-12 -right-12 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl group-hover:bg-purple-500/10 transition-all">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <span
+                            class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Partners
+                            (90%)</span>
+                        <div
+                            class="bg-purple-500/10 p-2.5 rounded-2xl border border-purple-500/20 text-purple-600 dark:text-purple-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-2">₹<%=
+                            stats.customerRevenue.toLocaleString('en-IN') %>
+                    </h3>
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Partner Payouts</p>
+                </div>
+            </div>
+
+            <!-- Avg Transaction -->
+            <div
+                class="bg-white dark:bg-[#1e293b] rounded-[2.5rem] p-8 border border-slate-300 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+                <div
+                    class="absolute -top-12 -right-12 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl group-hover:bg-orange-500/10 transition-all">
+                </div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <span
+                            class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Flux
+                            Density</span>
+                        <div
+                            class="bg-orange-500/10 p-2.5 rounded-2xl border border-orange-500/20 text-orange-600 dark:text-orange-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-2">₹<%=
+                            Math.round(stats.avgTransaction) %>
+                    </h3>
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                        <%= stats.totalTransactions %> Total Events
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Performing Lists -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Top Performing Kiosks -->
+            <div
+                class="bg-white dark:bg-[#1e293b] rounded-[2.5rem] border border-slate-300 dark:border-slate-700/50 shadow-sm p-8">
+                <h3
+                    class="text-xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase tracking-[0.2em] text-xs text-slate-400 dark:text-slate-500">
+                    Elite Nodes Breakdown</h3>
+                <div class="space-y-6">
+                    <% const topMachines=machineStats.slice(0, 5); topMachines.forEach((machine, index)=> {
+                        const rank = index + 1;
+                        const revenue = parseFloat(machine.dataValues.total_revenue);
+                        const tx = machine.dataValues.total_transactions;
+                        const ownerName = machine.Machine && machine.Machine.owner ? machine.Machine.owner.username :
+                        (machine.owner_name || 'Unknown Owner');
+                        %>
+                        <div
+                            class="flex items-center justify-between group p-3 hover:bg-slate-50 dark:hover:bg-white/[0.03] rounded-2xl transition-all border border-transparent hover:border-slate-300 dark:hover:border-slate-800">
+                            <div class="flex items-center gap-5">
+                                <div
+                                    class="flex-shrink-0 w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-500 border border-indigo-500/20 flex items-center justify-center font-black text-sm">
+                                    <%= rank %>
+                                </div>
+                                <div>
+                                    <p
+                                        class="text-slate-900 dark:text-white font-black text-sm uppercase tracking-tight">
+                                        <%= machine.machine_name || 'Unnamed Machine' %>
+                                    </p>
+                                    <p
+                                        class="text-slate-500 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                                        <%= ownerName %>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-slate-900 dark:text-white font-black text-lg tracking-tight">₹<%=
+                                        revenue.toLocaleString('en-IN') %>
+                                </p>
+                                <p
+                                    class="text-slate-500 dark:text-slate-500 text-[9px] font-black uppercase tracking-widest">
+                                    <%= tx %> Events
+                                </p>
+                            </div>
+                        </div>
+                        <% }); %>
+                </div>
+            </div>
+
+            <!-- Top Earning Customers -->
+            <div
+                class="bg-white dark:bg-[#1e293b] rounded-[2.5rem] border border-slate-300 dark:border-slate-700/50 shadow-sm p-8">
+                <h3
+                    class="text-xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase tracking-[0.2em] text-xs text-slate-400 dark:text-slate-500">
+                    Partner Profit share</h3>
+                <div class="space-y-6">
+                    <% const topOwners=ownerStats.slice(0, 5); topOwners.forEach((owner, index)=> {
+                        const rank = index + 1;
+                        const revenue = parseFloat(owner.dataValues.total_revenue);
+                        const customerShare = revenue * 0.90;
+                        const activeKiosks = owner.dataValues.active_kiosks;
+                        %>
+                        <div
+                            class="flex items-center justify-between group p-3 hover:bg-slate-50 dark:hover:bg-white/[0.03] rounded-2xl transition-all border border-transparent hover:border-slate-300 dark:hover:border-slate-800">
+                            <div class="flex items-center gap-5">
+                                <div
+                                    class="flex-shrink-0 w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 border border-emerald-500/20 flex items-center justify-center font-black text-sm">
+                                    <%= rank %>
+                                </div>
+                                <div>
+                                    <p
+                                        class="text-slate-900 dark:text-white font-black text-sm uppercase tracking-tight">
+                                        <%= owner.owner_name || 'Partner' %>
+                                    </p>
+                                    <p
+                                        class="text-slate-500 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                                        <%= activeKiosks %> Active Nodes
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-emerald-600 dark:text-emerald-500 font-black text-lg tracking-tight">₹<%=
+                                        customerShare.toLocaleString('en-IN') %>
+                                </p>
+                                <p
+                                    class="text-slate-500 dark:text-slate-500 text-[9px] font-black uppercase tracking-widest">
+                                    90% Net Share</p>
+                            </div>
+                        </div>
+                        <% }); %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Breakdown Table -->
+        <div
+            class="bg-white dark:bg-white/[0.02] backdrop-blur-xl rounded-[2.5rem] border border-slate-300 dark:border-slate-700/50 shadow-2xl overflow-hidden">
+            <div class="p-8 border-b border-slate-300 dark:border-slate-700/50 bg-slate-50 dark:bg-white/[0.02]">
+                <h3 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Revenue Breakdown by Node
+                </h3>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest mt-1">
+                    Granular Financial Distribution</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr
+                            class="bg-slate-50 dark:bg-slate-800/30 text-slate-500 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] border-b border-slate-300 dark:border-slate-700/50">
+                            <th class="px-8 py-5 font-black">Target Node</th>
+                            <th class="px-8 py-5 font-black">Registered Owner</th>
+                            <th class="px-8 py-5 font-black">Flux Unit Cost</th>
+                            <th class="px-8 py-5 font-black">Gross Yield</th>
+                            <th class="px-8 py-5 font-black text-indigo-600 dark:text-indigo-400">Platform (10%)</th>
+                            <th class="px-8 py-5 font-black text-emerald-600 dark:text-emerald-400">Partner (90%)</th>
+                            <th class="px-8 py-5 font-black">Total Events</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700/30 text-sm">
+                        <% machineStats.forEach(machine=> {
+                            const revenue = parseFloat(machine.dataValues.total_revenue);
+                            const tx = machine.dataValues.total_transactions;
+                            const price = machine.Machine ? parseFloat(machine.Machine.cleaning_cost) : 0;
+                            const ownerName = machine.Machine && machine.Machine.owner ? machine.Machine.owner.username
+                            : (machine.owner_name || 'Partner');
+                            const platformShare = revenue * 0.10;
+                            const customerShare = revenue * 0.90;
+                            %>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all group">
+                                <td class="px-8 py-6">
+                                    <div
+                                        class="text-slate-900 dark:text-white font-black uppercase tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                        <%= machine.machine_name || 'Unnamed' %>
+                                    </div>
+                                    <div
+                                        class="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mt-0.5">
+                                        <%= machine.machine_id %>
+                                    </div>
+                                </td>
+                                <td class="px-8 py-6 text-slate-500 dark:text-slate-400 font-bold uppercase text-xs">
+                                    <%= ownerName %>
+                                </td>
+                                <td class="px-8 py-6 text-slate-500 dark:text-slate-400 font-black">
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-600 mr-1 italic">₹</span>
+                                    <%= price %>
+                                </td>
+                                <td class="px-8 py-6 font-black text-slate-900 dark:text-white text-lg tracking-tight">
+                                    ₹<%= revenue.toLocaleString('en-IN') %>
+                                </td>
+                                <td class="px-8 py-6 text-indigo-600 dark:text-indigo-400/80 font-black">
+                                    ₹<%= Math.round(platformShare).toLocaleString('en-IN') %>
+                                </td>
+                                <td class="px-8 py-6 text-emerald-600 dark:text-emerald-400/80 font-black">
+                                    ₹<%= Math.round(customerShare).toLocaleString('en-IN') %>
+                                </td>
+                                <td class="px-8 py-6">
+                                    <span
+                                        class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest border border-slate-300 dark:border-slate-700">
+                                        <%= tx %> Events
+                                    </span>
+                                </td>
+                            </tr>
+                            <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

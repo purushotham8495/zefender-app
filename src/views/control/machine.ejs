@@ -1,0 +1,1222 @@
+<%- include('../partials/header') %>
+    <style>
+        @keyframes progress-indefinite {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .animate-progress-indefinite {
+            animation: progress-indefinite 1.5s infinite linear;
+            width: 50%;
+        }
+    </style>
+
+    <div class="bg-gray-800 p-4 mb-4 rounded text-xs font-mono overflow-auto max-h-64 hidden">
+        <strong>DEBUG DATA:</strong>
+        <pre><%= JSON.stringify(machine, null, 2) %></pre>
+    </div>
+    <!-- Main Grid Layout -->
+    <div x-data="machineCtrl"
+        class="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-800 dark:text-slate-200 font-sans -m-6 p-6">
+        <!-- Top Navigation Bar -->
+        <div class="flex justify-between items-center mb-8">
+            <a href="/machines" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span class="font-medium text-sm">Back to Machines</span>
+            </a>
+
+            <div class="flex items-center gap-4">
+                <!-- Live Status Indicator -->
+                <div
+                    class="flex items-center gap-2 bg-white dark:bg-[#1e293b] px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700/50 shadow-sm">
+                    <template x-if="connected">
+                        <span
+                            class="flex items-center gap-2 text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            Live Link Active
+                        </span>
+                    </template>
+                    <template x-if="!connected">
+                        <span
+                            class="flex items-center gap-2 text-[10px] font-bold text-red-400 uppercase tracking-widest">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Disconnected
+                        </span>
+                    </template>
+                </div>
+
+                <% if(user.role==='admin' ) { %>
+                    <button @click="openConfigModal()"
+                        class="p-2 bg-white dark:bg-[#1e293b] rounded-full text-slate-400 hover:text-indigo-500 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700/50 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </button>
+                    <% } %>
+                        <!-- Reconnect WiFi Button -->
+                        <button @click="reconnectWifi()" title="Reconnect WiFi"
+                            class="p-2 bg-white dark:bg-[#1e293b] rounded-full text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-slate-700/50 shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                </path>
+                            </svg>
+                        </button>
+            </div>
+        </div>
+
+        <!-- Main Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Left Column: Status & Emergency -->
+            <div class="space-y-6">
+                <!-- Machine Identity Card -->
+                <div
+                    class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-300 dark:border-slate-700/50 p-8 flex flex-col items-center justify-center relative overflow-hidden shadow-xl min-h-[340px]">
+
+                    <% if(user.role==='admin' ) { %>
+                        <!-- Settings Gear -->
+                        <button @click="otaModalOpen = true"
+                            class="absolute top-4 right-4 p-2 text-slate-500 hover:text-white transition-colors z-20">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </button>
+                        <% } %>
+                            <div class="text-center z-10 w-full px-4">
+                                <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-1 truncate"
+                                    title="<%= machine.machine_name %>">
+                                    <%= machine.machine_name %>
+                                </h2>
+                                <p class="text-slate-400 dark:text-slate-500 font-mono text-xs tracking-widest uppercase truncate"
+                                    title="<%= machine.machine_id %>">
+                                    <%= machine.machine_id %>
+                                </p>
+                            </div>
+
+                            <!-- Improved Circular Status/Timer -->
+                            <div class="relative mt-8 mb-6 group">
+                                <!-- Background Glow -->
+                                <div
+                                    class="absolute inset-0 bg-indigo-500/10 blur-3xl rounded-full scale-150 active:scale-125 transition-transform duration-1000">
+                                </div>
+
+                                <!-- SVG Progress Ring -->
+                                <svg class="w-48 h-48 -rotate-90 transform relative z-10">
+                                    <!-- Background Track -->
+                                    <circle cx="96" cy="96" r="88" stroke="currentColor" stroke-width="6"
+                                        fill="transparent" class="text-slate-100 dark:text-slate-800" />
+
+                                    <!-- Progress Bar -->
+                                    <circle cx="96" cy="96" r="88" stroke="currentColor" stroke-width="8"
+                                        fill="transparent" stroke-dasharray="552.92"
+                                        :stroke-dashoffset="552.92 - (runningSequence ? ((currentStepIndex || 0) / (sequences.length || 1) * 552.92) : (connected ? 552.92 * 0.2 : 0))"
+                                        stroke-linecap="round" :class="{
+                                    'text-indigo-500 transition-all duration-700 ease-out': runningSequence,
+                                    'text-emerald-500/50 transition-all': !runningSequence && connected,
+                                    'text-slate-200 dark:text-slate-800 transition-all': !connected
+                                }" />
+
+                                    <!-- Scanning/Pulse Effect (Idle/Connected) -->
+                                    <circle x-show="!runningSequence && connected" cx="96" cy="96" r="88"
+                                        stroke="currentColor" stroke-width="2" fill="transparent"
+                                        class="text-emerald-500/40 animate-pulse" stroke-dasharray="100 450" />
+                                </svg>
+
+                                <!-- Central Content -->
+                                <div
+                                    class="absolute inset-0 flex flex-col items-center justify-center z-20 text-center px-6">
+                                    <!-- Running State -->
+                                    <template x-if="runningSequence">
+                                        <div class="flex flex-col items-center">
+                                            <span
+                                                class="text-[10px] text-indigo-500 dark:text-indigo-400 font-black tracking-[0.2em] uppercase mb-1">Process</span>
+                                            <span
+                                                class="text-4xl font-black text-slate-800 dark:text-white leading-none"
+                                                x-text="currentStepIndex ? '#' + currentStepIndex : '..'"></span>
+                                            <span
+                                                class="text-[9px] text-slate-500 dark:text-slate-400 font-bold mt-2 uppercase tracking-widest bg-slate-100 dark:bg-slate-800/50 px-2 py-0.5 rounded backdrop-blur-sm truncate max-w-[120px]"
+                                                x-text="currentStepDescription || 'Executing'"></span>
+                                        </div>
+                                    </template>
+
+                                    <!-- Ready State -->
+                                    <template x-if="!runningSequence && connected">
+                                        <div class="flex flex-col items-center">
+                                            <div
+                                                class="w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center mb-2">
+                                                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="text-xs font-black text-emerald-400 tracking-[0.2em] uppercase">Ready</span>
+                                            <span class="text-[8px] text-slate-500 font-mono mt-1">SYSTEM ARMED</span>
+                                        </div>
+                                    </template>
+
+                                    <!-- Offline State -->
+                                    <template x-if="!connected">
+                                        <div class="flex flex-col items-center">
+                                            <div
+                                                class="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-2">
+                                                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728">
+                                                    </path>
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="text-xs font-black text-red-500 tracking-[0.2em] uppercase">Offline</span>
+                                            <span class="text-[8px] text-slate-600 font-mono mt-1">LINK DROPPED</span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div
+                                class="flex flex-col items-center gap-1 text-[10px] text-slate-500 font-mono mt-4 w-full">
+                                <div class="flex items-center gap-2 justify-center w-full px-4">
+                                    <!-- Bullet & SSID -->
+                                    <span x-show="networkInfo?.ssid" class="truncate max-w-[150px]"
+                                        x-text="networkInfo.ssid"></span>
+                                    <span x-show="!networkInfo?.ssid">No WiFi</span>
+
+                                    <span x-show="networkInfo?.rssi"
+                                        x-html="'&bull; ' + networkInfo.rssi + ' dBm'"></span>
+                                </div>
+                                <div x-show="networkInfo?.ip" class="text-indigo-600 dark:text-indigo-400 font-bold"
+                                    x-text="networkInfo.ip">
+                                </div>
+                                <div x-show="pingMs > 0"
+                                    class="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1"
+                                    x-text="'Ping: ' + pingMs + ' ms'"></div>
+                                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1"
+                                    x-text="'Last Seen: ' + lastHeartbeat">
+                                </div>
+                            </div>
+                </div>
+
+                <!-- Emergency Stop -->
+                <button @click="emergencyStop()"
+                    class="w-full bg-white dark:bg-slate-900 border border-red-500/30 hover:bg-red-500 active:bg-red-600 text-slate-800 dark:text-white rounded-2xl p-6 flex items-center justify-between shadow-lg transition-all group overflow-hidden relative mb-4">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-transparent via-red-500/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+                    </div>
+                    <div class="flex flex-col items-start z-10">
+                        <span class="text-sm font-black text-red-500 uppercase tracking-widest">Emergency Stop</span>
+                        <span class="text-slate-400 dark:text-slate-500 text-[10px] mt-1 font-bold">HALT ALL
+                            OPERATIONS</span>
+                    </div>
+                    <div
+                        class="bg-red-500/10 p-3 rounded-full border border-red-500/20 z-10 group-hover:bg-white group-hover:text-red-500 transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path>
+                        </svg>
+                    </div>
+                </button>
+
+                <!-- Recent Transactions (Moved to Left Column) -->
+                <div
+                    class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-300 dark:border-slate-700/50 p-6 shadow-xl mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0-2.08-.402-2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                </path>
+                            </svg>
+                            Live Transactions
+                        </h3>
+                    </div>
+                    <div class="space-y-3">
+                        <template x-for="tx in transactions.slice(0, 3)" :key="tx.event_time">
+                            <div
+                                class="flex items-center justify-between p-3 bg-slate-50 dark:bg-[#0f172a]/50 rounded-xl border border-slate-300 dark:border-slate-700/30 hover:border-emerald-500/30 transition-all group">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                                        <span class="text-xs font-bold">₹</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-800 dark:text-white font-black text-sm leading-none"
+                                            x-text="'₹' + parseFloat(tx.amount).toFixed(2)"></p>
+                                        <p class="text-[9px] text-slate-500 mt-1 font-mono"
+                                            x-text="new Date(tx.event_time).toLocaleTimeString()"></p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-emerald-500/20">
+                                    OK
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="transactions.length === 0">
+                            <div class="text-center py-6">
+                                <div
+                                    class="w-10 h-10 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">No Activity
+                                </p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Controls -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Sequence Control -->
+                <div
+                    class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-300 dark:border-slate-700/50 p-6 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Sequence Control
+                        </h3>
+                        <% if(user.role==='admin' ) { %>
+                            <button @click="openSequenceModal()"
+                                class="text-xs font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-wider">Edit
+                                Sequences</button>
+                            <% } %>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Sequence Card (Simulated as one for now, but looping existing mock) -->
+                        <template x-for="(seq, index) in sequences" :key="index">
+                            <div
+                                class="bg-slate-50 dark:bg-[#0f172a]/50 rounded-xl p-4 border border-slate-300 dark:border-slate-700/50 hover:border-slate-400 dark:hover:border-slate-600 transition-colors flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-bold text-slate-700 dark:text-slate-200"
+                                        x-text="seq.description || 'Step ' + seq.step_index"></h4>
+                                    <div class="flex items-center gap-4 mt-2">
+                                        <span class="text-xs text-slate-500"
+                                            x-text="(seq.duration_ms / 1000) + 's Duration'"></span>
+                                        <span
+                                            class="text-[10px] px-2 py-0.5 rounded font-black border uppercase tracking-widest transition-colors"
+                                            :class="{
+                                                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': seq.action.includes('ON') || seq.action.includes('RUN'),
+                                                'bg-red-500/10 text-red-400 border-red-500/20': seq.action.includes('OFF') || seq.action.includes('STOP'),
+                                                'bg-slate-800 text-slate-400 border-slate-700': !seq.action.includes('ON') && !seq.action.includes('OFF')
+                                            }" x-text="seq.action"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <% if(machine.sequences.length===0) { %>
+                            <div class="col-span-2 text-center p-4 text-slate-500 text-sm">No sequences defined.</div>
+                            <% } %>
+
+                                <!-- General Run Button if sequences exist -->
+                                <template x-if="sequences.length > 0">
+                                    <div
+                                        class="col-span-1 md:col-span-2 bg-slate-50 dark:bg-[#0f172a]/50 rounded-xl p-4 border border-slate-300 dark:border-slate-700/50 flex justify-between items-center">
+                                        <div>
+                                            <h4 class="font-bold text-slate-800 dark:text-white">Main Routine</h4>
+                                            <p class="text-xs text-slate-500 mt-1"><span
+                                                    x-text="sequences.length"></span> Steps configured</p>
+                                        </div>
+                                        <button @click="runSequence()" :disabled="runningSequence || !connected"
+                                            class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all">
+                                            <span x-text="runningSequence ? 'Running...' : 'Start'"></span>
+                                        </button>
+                                    </div>
+                                </template>
+                    </div>
+                </div>
+
+                <!-- GPIO Control Matrix -->
+                <div
+                    class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-300 dark:border-slate-700/50 p-6 shadow-sm min-h-[400px]">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z">
+                                </path>
+                            </svg>
+                            GPIO Control Matrix
+                        </h3>
+
+                        <!-- Global Control Buttons -->
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button @click="toggleGPIO('ALL_ON')" :disabled="runningSequence || !connected"
+                                class="flex-1 sm:flex-none px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/50 rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95 disabled:opacity-50">
+                                ⚡ ALL ON
+                            </button>
+                            <button @click="toggleGPIO('ALL_OFF')" :disabled="runningSequence || !connected"
+                                class="flex-1 sm:flex-none px-4 py-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/50 rounded-lg text-xs font-bold transition-all shadow-lg active:scale-95 disabled:opacity-50">
+                                🌑 ALL OFF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="gpio in gpios" :key="gpio.pin_number">
+                            <div x-data="{ mode: 'timer', timerDuration: 5 }"
+                                class="bg-slate-50 dark:bg-[#0f172a] rounded-xl p-5 border border-slate-300 dark:border-slate-700/50 relative overflow-hidden group flex flex-col justify-between min-h-[220px]">
+
+                                <!-- Header & Status -->
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-lg flex items-center justify-center transition-colors shadow-inner"
+                                            :class="(gpio.is_active_low ? !gpio.is_active : gpio.is_active) ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-slate-800 dark:text-white text-base truncate w-24"
+                                                x-text="gpio.label || 'GPIO ' + gpio.pin_number" :title="gpio.label">
+                                            </h4>
+                                            <p class="text-[10px] text-slate-500 font-mono">PIN <span
+                                                    x-text="gpio.pin_number"></span></p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status Dot -->
+                                    <div class="w-3 h-3 rounded-full shadow-[0_0_8px_currentColor] transition-all duration-300"
+                                        :class="(gpio.is_active_low ? !gpio.is_active : gpio.is_active) ? 'bg-emerald-400 text-emerald-400' : 'bg-slate-700 text-slate-700'">
+                                    </div>
+                                </div>
+
+                                <!-- Mode Selector (Tab Switch) -->
+                                <div
+                                    class="bg-slate-200 dark:bg-slate-800 p-1 rounded-lg flex text-[10px] font-bold mb-4">
+                                    <button @click="mode = 'manual'"
+                                        :class="mode === 'manual' ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                                        class="flex-1 py-1 rounded transition-all">MANUAL</button>
+                                    <button @click="mode = 'timer'"
+                                        :class="mode === 'timer' ? 'bg-indigo-600 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'"
+                                        class="flex-1 py-1 rounded transition-all">TIMER</button>
+                                </div>
+
+                                <!-- CONTROLS AREA -->
+                                <div>
+                                    <!-- MANUAL MODE: Toggle Switch -->
+                                    <div x-show="mode === 'manual'"
+                                        class="flex items-center justify-between bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-300 dark:border-slate-700/50">
+                                        <span class="text-xs text-slate-300 font-medium">State: <span
+                                                x-text="(gpio.is_active_low ? !gpio.is_active : gpio.is_active) ? 'ON' : 'OFF'"
+                                                :class="(gpio.is_active_low ? !gpio.is_active : gpio.is_active) ? 'text-emerald-400' : 'text-slate-500'"></span></span>
+
+                                        <button @click="toggleGPIO(gpio.pin_number)"
+                                            :disabled="runningSequence || !connected"
+                                            class="w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none relative"
+                                            :class="(gpio.is_active_low ? !gpio.is_active : gpio.is_active) ? 'bg-emerald-500' : 'bg-slate-600'">
+                                            <div class="w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300"
+                                                :class="(gpio.is_active_low ? !gpio.is_active : gpio.is_active) ? 'translate-x-6' : 'translate-x-0'">
+                                            </div>
+                                        </button>
+                                    </div>
+
+                                    <!-- TIMER MODE: Pulse Controls -->
+                                    <div x-show="mode === 'timer'" class="space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <input type="number" x-model="timerDuration" min="1" max="60"
+                                                class="w-16 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-center text-sm rounded border border-slate-300 dark:border-slate-600 focus:border-indigo-500 outline-none py-1">
+                                            <span class="text-xs text-slate-400">seconds</span>
+                                        </div>
+
+                                        <button @click="pulseGPIO(gpio.pin_number, timerDuration)"
+                                            :disabled="runningSequence || !connected"
+                                            class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold shadow-lg shadow-indigo-500/20 active:translate-y-0.5 transition-all flex items-center justify-center gap-2">
+                                            <svg class="w-3 h-3 animate-pulse" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                            </svg>
+                                            PULSE ON
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Remote Serial Console -->
+                <div
+                    class="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-300 dark:border-slate-700/50 overflow-hidden shadow-2xl">
+                    <div class="px-6 py-4 border-b border-white/5 bg-slate-900/50 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="p-1.5 bg-indigo-500/10 rounded-lg">
+                                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 uppercase tracking-widest">
+                                Remote Serial Console
+                            </h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button @click="machineLogs = []"
+                                class="text-[10px] font-bold text-slate-500 hover:text-red-400 transition-colors px-2 py-1 uppercase tracking-tighter">Clear</button>
+                            <button @click="showLogs = !showLogs"
+                                class="text-slate-500 hover:text-white transition-colors">
+                                <svg class="w-4 h-4 transform transition-transform"
+                                    :class="showLogs ? 'rotate-180' : ''" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="showLogs" x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 -translate-y-2"
+                        class="p-4 font-mono text-[11px] leading-relaxed max-h-[300px] overflow-y-auto bg-black/40 custom-scrollbar">
+
+                        <template x-if="machineLogs.length === 0">
+                            <div class="flex flex-col items-center justify-center py-10 text-slate-600 italic">
+                                <svg class="w-8 h-8 mb-2 opacity-20" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>No activity logs received yet...</span>
+                            </div>
+                        </template>
+
+                        <div class="flex flex-col gap-1">
+                            <template x-for="(log, idx) in machineLogs" :key="idx">
+                                <div
+                                    class="group flex gap-3 hover:bg-white/5 p-1 rounded transition-colors border-l-2 border-transparent hover:border-indigo-500/50">
+                                    <span class="text-slate-400 dark:text-slate-600 whitespace-nowrap"
+                                        x-text="log.time"></span>
+                                    <span class="text-indigo-500 dark:text-indigo-400/80 font-bold whitespace-nowrap">
+                                        [SYS] </span>
+                                    <span class="text-slate-600 dark:text-slate-300 break-all" :class="{
+                                              'text-emerald-500 dark:text-emerald-400': log.message.includes('ON') || log.message.includes('Success'),
+                                              'text-red-500 dark:text-red-400': log.message.includes('OFF') || log.message.includes('STOP') || log.message.includes('Error'),
+                                              'text-amber-500 dark:text-amber-400': log.message.includes('Config') || log.message.includes('Heartbeat')
+                                          }" x-text="log.message"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals (Re-using existing logic with updated styling) -->
+        <!-- GPIO Configuration Modal -->
+        <div x-show="gpioModalOpen"
+            class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-slate-900/80 backdrop-blur-sm"
+            x-cloak>
+            <div @click.away="gpioModalOpen = false"
+                class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-300 dark:border-slate-700 w-full max-w-md overflow-hidden transform transition-all">
+                <div
+                    class="px-6 py-4 border-b border-slate-300 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-[#0f172a]">
+                    <h3 class="text-lg font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z">
+                            </path>
+                        </svg>
+                        Hardware Pinout
+                    </h3>
+                    <button @click="gpioModalOpen = false" class="text-slate-400 hover:text-white"><svg class="w-5 h-5"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg></button>
+                </div>
+                <div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    <template x-for="(g, index) in editedGpios" :key="index">
+                        <div
+                            class="bg-slate-50 dark:bg-[#0f172a]/50 p-4 rounded-xl border border-slate-300 dark:border-slate-700/50 hover:border-indigo-500/30 transition-all group">
+                            <div class="flex gap-4 items-start">
+                                <div class="flex-1 space-y-1" x-data="{ manualMode: false }">
+                                    <div class="flex justify-between items-center">
+                                        <label
+                                            class="text-[9px] text-slate-500 uppercase font-black tracking-tighter">I/O
+                                            Pin</label>
+                                        <button @click="manualMode = !manualMode; if(!manualMode) g.pin_number = ''"
+                                            class="text-[9px] text-indigo-400 font-bold uppercase hover:text-indigo-300 transition-colors"
+                                            x-text="manualMode ? 'List' : 'Manual'"></button>
+                                    </div>
+
+
+                                    <select x-show="!manualMode" x-model.number="g.pin_number"
+                                        class="w-full bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700/50 rounded-lg px-2 py-1.5 text-slate-800 dark:text-white text-xs font-bold focus:border-indigo-500 outline-none appearance-none transition-all">
+                                        <option value="" disabled>Select Pin...</option>
+                                        <template x-for="p in [4,5,16,17,18,19,21,22,23,25,26,27,32,33]">
+                                            <option :value="p" x-text="'GPIO ' + p"></option>
+                                        </template>
+                                    </select>
+
+                                    <!-- Manual Input Mode -->
+                                    <input x-show="manualMode" type="number" x-model.number="g.pin_number"
+                                        placeholder="Enter ID"
+                                        class="w-full bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700/50 rounded-lg px-2 py-1.5 text-slate-800 dark:text-white text-xs font-bold focus:border-indigo-500 outline-none placeholder-slate-400 transition-all">
+                                </div>
+                                <div class="flex-[1.5] space-y-1">
+                                    <label class="text-[9px] text-slate-500 uppercase font-black tracking-tighter">Alias
+                                        / Label</label>
+                                    <input type="text" x-model="g.label" placeholder="e.g. Pump 1"
+                                        class="w-full bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700/50 rounded-lg px-2 py-1.5 text-slate-800 dark:text-white text-xs font-bold focus:border-emerald-500 outline-none placeholder-slate-400 transition-all">
+                                </div>
+                                <div class="flex flex-col items-center gap-1.5">
+                                    <label
+                                        class="text-[9px] text-slate-500 uppercase font-black tracking-tighter">Invert</label>
+                                    <button @click="g.is_active_low = !g.is_active_low"
+                                        class="w-8 h-4 rounded-full relative transition-colors duration-200"
+                                        :class="g.is_active_low ? 'bg-indigo-600' : 'bg-slate-700'">
+                                        <div class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-200"
+                                            :class="g.is_active_low ? 'translate-x-4' : 'translate-x-0'"></div>
+                                    </button>
+                                </div>
+
+
+                                <button @click="editedGpios.splice(index, 1)"
+                                    class="pt-5 text-red-500/50 hover:text-red-500 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                    <button @click="editedGpios.push({ pin_number: '', label: '', is_active_low: true })"
+                        class="w-full py-2 bg-indigo-600/10 border border-dashed border-indigo-500/30 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        REGISTER NEW PIN
+                    </button>
+                </div>
+                <div
+                    class="px-6 py-4 bg-slate-50 dark:bg-[#0f172a] border-t border-slate-300 dark:border-slate-700/50 flex gap-4">
+                    <button @click="gpioModalOpen = false"
+                        class="flex-1 py-2 text-xs font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">Dismiss</button>
+                    <button @click="saveGPIOConfig()"
+                        class="flex-[2] py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 active:scale-95 transition-all">
+                        Commit Hardware Configuration
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sequence Editor Modal -->
+        <div x-show="sequenceModalOpen"
+            class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-slate-900/80 backdrop-blur-sm"
+            x-cloak>
+            <div @click.away="sequenceModalOpen = false"
+                class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-300 dark:border-slate-700 w-full max-w-2xl overflow-hidden">
+                <div
+                    class="px-6 py-4 border-b border-slate-300 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-[#0f172a]">
+                    <h3 class="text-lg font-bold text-white">Edit Sequences</h3>
+                    <button @click="sequenceModalOpen = false" class="text-slate-400 hover:text-white"><svg
+                            class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg></button>
+                </div>
+                <div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    <template x-for="(s, index) in editedSequences" :key="index">
+                        <div draggable="true" @dragstart="draggingIndex = index" @dragover.prevent
+                            @drop="if(draggingIndex !== null) { const item = editedSequences.splice(draggingIndex, 1)[0]; editedSequences.splice(index, 0, item); draggingIndex = null; }"
+                            class="bg-slate-50 dark:bg-[#0f172a]/50 p-4 rounded-xl border border-slate-300 dark:border-slate-700/50 space-y-3 cursor-move transition-all duration-200"
+                            :class="{ 'opacity-50 border-dashed border-indigo-500': draggingIndex === index, 'hover:border-slate-300 dark:hover:border-slate-500': draggingIndex === null }">
+
+                            <div class="flex justify-between items-center border-b border-slate-800/50 pb-3">
+                                <div class="flex items-center gap-3">
+                                    <!-- Drag Handle -->
+                                    <div class="p-1 hover:bg-white/5 rounded transition-colors">
+                                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 8h16M4 16h16"></path>
+                                        </svg>
+                                    </div>
+
+                                    <div class="bg-indigo-600/20 text-indigo-400 w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black border border-indigo-500/30"
+                                        x-text="index + 1"></div>
+
+                                    <input type="text" x-model="s.description"
+                                        placeholder="Action Label (e.g. Tank Fill)"
+                                        class="bg-transparent border-none outline-none text-slate-800 dark:text-white font-bold text-xs placeholder-slate-400 dark:placeholder-slate-700 w-full focus:placeholder-slate-600 dark:focus:placeholder-slate-500 transition-all">
+                                </div>
+                                <button @click="editedSequences.splice(index, 1)"
+                                    class="text-red-500/40 hover:text-red-500 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="space-y-1">
+                                    <label
+                                        class="text-[9px] text-slate-500 uppercase font-black tracking-tighter ml-1">Pin
+                                        Assignment</label>
+                                    <select x-model.number="s.pin_number"
+                                        class="w-full bg-[#0f172a] border border-slate-700/50 rounded-lg px-2 py-1.5 text-white text-xs font-bold outline-none focus:border-indigo-500 transition-all">
+                                        <option value="-1" class="font-bold text-indigo-400">★ ALL PINS (GLOBAL)
+                                        </option>
+                                        <option disabled>──────────</option>
+                                        <template x-for="g in gpios" :key="g.pin_number">
+                                            <option :value="g.pin_number"
+                                                x-text="'Pin ' + g.pin_number + ' (' + g.label + ')'"></option>
+                                        </template>
+                                    </select>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label
+                                        class="text-[9px] text-slate-500 uppercase font-black tracking-tighter ml-1">Logic
+                                        State</label>
+                                    <div class="flex bg-[#0f172a] rounded-lg p-0.5 border border-slate-700/50 h-[30px]">
+                                        <button @click="s.action = 'ON'"
+                                            class="flex-1 text-[10px] font-black rounded transition-all"
+                                            :class="s.action === 'ON' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'">ON</button>
+                                        <button @click="s.action = 'OFF'"
+                                            class="flex-1 text-[10px] font-black rounded transition-all"
+                                            :class="s.action === 'OFF' ? 'bg-red-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'">OFF</button>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label
+                                        class="text-[9px] text-slate-500 uppercase font-black tracking-tighter ml-1">Duration
+                                        (MS)</label>
+                                    <input type="number" x-model.number="s.duration_ms" step="500" placeholder="1000"
+                                        class="w-full bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700/50 rounded-lg px-2 py-1.5 text-slate-800 dark:text-white text-xs font-bold outline-none focus:border-amber-500 transition-all">
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <button
+                        @click="editedSequences.push({ pin_number: gpios[0]?.pin_number || 4, action: 'ON', duration_ms: 1000, step_index: editedSequences.length + 1 })"
+                        class="w-full py-2 bg-emerald-500/10 border border-dashed border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        APPEND NEW STEP
+                    </button>
+                </div>
+
+                <div
+                    class="px-6 py-4 bg-slate-50 dark:bg-[#0f172a] border-t border-slate-300 dark:border-slate-700/50 flex gap-4">
+                    <button @click="sequenceModalOpen = false"
+                        class="flex-1 py-2 text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-slate-800 dark:hover:text-white transition-colors">Discard</button>
+                    <button @click="saveSequenceConfig()"
+                        class="flex-[2] py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all">
+                        Save Execution Plan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- OTA Firmware Update Modal -->
+        <div x-show="otaModalOpen"
+            class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-slate-900/80 backdrop-blur-sm"
+            x-cloak>
+            <div @click.away="!uploadingOTA && (otaModalOpen = false)"
+                class="bg-white dark:bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-300 dark:border-slate-700 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+                <div
+                    class="px-6 py-4 border-b border-slate-300 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-[#0f172a]">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">Firmware Update (OTA)</h3>
+                    <button @click="otaModalOpen = false" x-show="!uploadingOTA"
+                        class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div class="text-center">
+                        <div
+                            class="w-16 h-16 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10">
+                                </path>
+                            </svg>
+                        </div>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Remote update allows you
+                            to modify the
+                            machine's behavior by uploading a new <b>.bin</b> firmware file directly.</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="relative group">
+                            <input type="file" id="otaInput" accept=".bin" class="hidden"
+                                @change="otaFile = $event.target.files[0]">
+                            <label for="otaInput"
+                                class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl cursor-pointer bg-slate-50 dark:bg-[#0f172a] hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:border-indigo-500/50 transition-all group overflow-hidden">
+                                <template x-if="!otaFile">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <svg class="w-10 h-10 mb-3 text-slate-500 group-hover:text-indigo-400 transition-colors"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12">
+                                            </path>
+                                        </svg>
+                                        <p class="text-sm text-slate-500 dark:text-slate-400">Select Binary File</p>
+                                        <p class="text-[10px] text-slate-600 mt-1 uppercase font-bold tracking-tighter">
+                                            Click or Drag & Drop</p>
+                                    </div>
+                                </template>
+                                <template x-if="otaFile">
+                                    <div class="flex flex-col items-center justify-center p-4">
+                                        <svg class="w-10 h-10 mb-3 text-emerald-400" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <p class="text-sm font-bold text-slate-800 dark:text-white truncate max-w-full px-4"
+                                            x-text="otaFile.name"></p>
+                                        <p class="text-[10px] text-slate-500 mt-1"
+                                            x-text="(otaFile.size / 1024).toFixed(1) + ' KB'"></p>
+                                        <button @click.prevent.stop="otaFile = null"
+                                            class="mt-2 text-xs text-red-400 hover:text-red-300 underline font-medium">Remove
+                                            File</button>
+                                    </div>
+                                </template>
+                            </label>
+                        </div>
+
+                        <div x-show="uploadingOTA" class="space-y-3 pt-2">
+                            <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden relative">
+                                <div
+                                    class="bg-indigo-500 h-full absolute top-0 left-0 animate-progress-indefinite shadow-[0_0_10px_rgba(99,102,241,0.5)]">
+                                </div>
+                            </div>
+                            <div
+                                class="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest">
+                                <span class="text-indigo-400 animate-pulse">Transferring Data...</span>
+                                <span class="text-slate-400 dark:text-slate-500">Do not close window</span>
+                            </div>
+                        </div>
+
+                        <button @click="uploadFirmware()" :disabled="!otaFile || uploadingOTA"
+                            class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:hover:bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 group active:scale-[0.98]">
+                            <svg x-show="!uploadingOTA"
+                                class="w-5 h-5 group-hover:translate-y-[-2px] transition-transform" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                            </svg>
+                            <span x-show="!uploadingOTA">Push Update to Machine</span>
+                            <span x-show="uploadingOTA" class="flex items-center gap-2">
+                                <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                                Uploading System...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Server-side data injection (via Base64) - ROBUST AGAINST FORMATTERS
+        const encodedData = '<%= frontendDataEncoded %>';
+        let serverData = {};
+        try {
+            serverData = JSON.parse(atob(encodedData));
+        } catch (e) {
+            console.error('Failed to decode server data', e);
+        }
+
+        // Register Alpine component immediately (before Alpine starts)
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('machineCtrl', () => ({
+                ...serverData,
+                lastHeartbeat: '<%- machine.last_heartbeat ? new Date(machine.last_heartbeat).toLocaleString() : "Never" %>',
+                pingMs: 0,
+
+                gpioModalOpen: false,
+                editedGpios: [],
+                sequenceModalOpen: false,
+                editedSequences: [],
+                currentStepDescription: null,
+                currentStepIndex: null,
+                draggingIndex: null,
+                socket: null,
+
+                otaModalOpen: false,
+                uploadingOTA: false,
+                otaFile: null,
+                machineLogs: [],
+                showLogs: true,
+
+                init() {
+                    console.log('Alpine Init - Machine ID:', this.machine_id);
+
+                    // Wait for Socket.IO to be available
+                    const initSocket = () => {
+                        if (typeof io === 'undefined') {
+                            console.warn('Socket.IO not loaded yet, retrying...');
+                            setTimeout(initSocket, 50);
+                            return;
+                        }
+
+                        const socket = io();
+                        this.socket = socket;
+
+                        socket.emit('register', JSON.stringify({
+                            machine_id: this.machine_id,
+                            client_type: 'web'
+                        }));
+
+                        // Start Ping Loop
+                        setInterval(() => {
+                            const start = Date.now();
+                            socket.emit('ping_req', start);
+                        }, 2000);
+
+                        socket.on('pong_res', (start) => {
+                            this.pingMs = Date.now() - start;
+                        });
+
+                        socket.on('machine_log', (data) => {
+                            this.machineLogs.unshift({
+                                ...data,
+                                time: new Date(data.received_at || Date.now()).toLocaleTimeString()
+                            });
+                            if (this.machineLogs.length > 50) this.machineLogs.pop();
+
+                            // Parse LOG for Step Updates (Requested: use esp32 log in that steps can be shown)
+                            // Pattern: 👉 Step 1: Description
+                            const stepMatch = data.message.match(/👉 Step (\d+): (.*)/);
+                            if (stepMatch) {
+                                this.currentStepIndex = parseInt(stepMatch[1]);
+                                this.currentStepDescription = stepMatch[2];
+                                if (!this.runningSequence) this.runningSequence = true;
+                            }
+                        });
+
+                        socket.on('machine_update', (data) => {
+                            if (data.machine_id === this.machine_id) {
+                                if (data.is_connected !== undefined) this.connected = data.is_connected;
+                                if (data.last_heartbeat) this.lastHeartbeat = new Date(data.last_heartbeat).toLocaleString();
+
+                                if (data.is_running_sequence === true && this.runningSequence === false) {
+                                    this.showToast('Sanitization Process Started');
+                                }
+
+                                if (data.new_transaction) {
+                                    this.transactions.unshift(data.new_transaction);
+                                    if (this.transactions.length > 5) this.transactions.pop();
+                                }
+
+                                if (data.is_running_sequence !== undefined) this.runningSequence = !!data.is_running_sequence;
+
+                                // Enhanced Step Tracking
+                                if (data.current_step) {
+                                    this.currentStepIndex = data.current_step;
+                                    // Try to find description in our local sequence list if server didn't send one
+                                    if (!data.step_description && this.sequences) {
+                                        const step = this.sequences.find(s => s.step_index == data.current_step);
+                                        this.currentStepDescription = step ? (step.description || step.action) : null;
+                                    } else {
+                                        this.currentStepDescription = data.step_description;
+                                    }
+                                } else if (this.runningSequence && this.sequences && this.sequences.length > 0) {
+                                    // FALLBACK: Infer step from active GPIOs if firmware doesn't send current_step
+                                    // We check which sequence step matches the currently active pin
+                                    // Note: This assumes sequence steps activate distinct pins or are ordered
+                                    const activePin = this.gpios.find(g => g.is_active)?.pin_number;
+                                    if (activePin) {
+                                        const step = this.sequences.find(s => s.pin_number == activePin && s.action === 'ON');
+                                        if (step) {
+                                            this.currentStepIndex = step.step_index;
+                                            this.currentStepDescription = step.description || step.action;
+                                        }
+                                    }
+                                } else if (!this.runningSequence) {
+                                    this.currentStepDescription = null;
+                                    this.currentStepIndex = null;
+                                }
+
+                                if (data.network) {
+                                    this.networkInfo = {
+                                        ssid: data.network.ssid || data.network.s,
+                                        rssi: data.network.rssi || data.network.r,
+                                        ip: data.network.ip || data.network.i
+                                    };
+                                }
+
+                                if (data.states && Array.isArray(this.gpios)) {
+                                    this.gpios.forEach(g => {
+                                        if (!g) return;
+                                        const val = data.states[g.pin_number];
+                                        if (val !== undefined) {
+                                            g.is_active = (val === true || val === 1 || val === '1');
+                                        }
+                                    });
+                                    // DEBUG: Check active pins after update
+                                    const activePlz = this.gpios.filter(g => g.is_active).map(g => g.pin_number);
+                                    if (this.runningSequence) console.log('Active Pins during Seq:', activePlz, 'States:', data.states);
+                                }
+
+                                if (data.is_running_sequence !== undefined) this.runningSequence = !!data.is_running_sequence;
+                            }
+                        });
+                    };
+
+                    // Start Socket.IO initialization
+                    initSocket();
+                },
+
+                showToast(message) {
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-[100] animate-bounce';
+                    toast.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="font-bold">${message}</span>`;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 5000);
+                },
+
+                async toggleGPIO(pinOrAction) {
+                    try {
+                        const payload = typeof pinOrAction === 'string'
+                            ? { action: pinOrAction }
+                            : { pin: pinOrAction };
+
+                        const response = await fetch(`/machines/control/${this.machine_id}/toggle`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' },
+                            body: JSON.stringify(payload)
+                        });
+                        const result = await response.json();
+
+                        if (typeof pinOrAction === 'string' && result.success) {
+                            this.showToast(pinOrAction === 'ALL_ON' ? 'All Pins Activated' : 'All Pins Deactivated');
+                        }
+                    } catch (err) { console.error(err); }
+                },
+
+                async pulseGPIO(pin, duration) {
+                    try {
+                        // duration is in seconds from input, convert to ms
+                        const durationMs = duration * 1000;
+                        const response = await fetch(`/machines/control/${this.machine_id}/pulse`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' },
+                            body: JSON.stringify({ pin, duration: durationMs })
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            this.showToast(`Pulsing Pin ${pin} for ${duration}s`);
+                        } else {
+                            alert('Failed to pulse GPIO');
+                        }
+                    } catch (err) { console.error(err); }
+                },
+
+                async runSequence() {
+                    if (!this.connected || this.runningSequence) return;
+                    try {
+                        const response = await fetch(`/machines/control/${this.machine_id}/sequence`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' }
+                        });
+                        const result = await response.json();
+                        if (result.success) this.runningSequence = true;
+                    } catch (err) { console.error(err); }
+                },
+
+                async emergencyStop() {
+                    if (!confirm('EMERGENCY STOP: Are you sure?')) return;
+                    try {
+                        const response = await fetch(`/machines/control/${this.machine_id}/emergency-stop`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' }
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            this.runningSequence = false;
+                            alert('Emergency Stop Command Sent');
+                        }
+                    } catch (err) { console.error(err); }
+                },
+
+                async reconnectWifi() {
+                    if (!confirm('Request WiFi Reconnection?')) return;
+                    try {
+                        const response = await fetch(`/machines/control/${this.machine_id}/reconnect-wifi`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' }
+                        });
+                        const result = await response.json();
+                        if (result.success) alert('Reconnection command sent');
+                    } catch (err) { console.error(err); }
+                },
+
+                openConfigModal() {
+                    this.editedGpios = JSON.parse(JSON.stringify(this.gpios));
+                    this.gpioModalOpen = true;
+                },
+
+                async saveGPIOConfig() {
+                    try {
+                        const response = await fetch(`/machines/control/${this.machine_id}/config`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' },
+                            body: JSON.stringify({ gpios: this.editedGpios })
+                        });
+                        const result = await response.json();
+                        // Reload to reflect changes
+                        location.reload();
+                    } catch (err) { console.error(err); }
+                },
+
+                openSequenceModal() {
+                    this.editedSequences = JSON.parse(JSON.stringify(this.sequences)).map(s => {
+                        // Map Backend Global Actions to Frontend UI (Pin -1)
+                        if (s.action === 'ALL_ON') return { ...s, pin_number: -1, action: 'ON' };
+                        if (s.action === 'ALL_OFF') return { ...s, pin_number: -1, action: 'OFF' };
+
+                        // Fix for Potential DB Corruption/Legacy Data (null pin but not ALL_ON/OFF)
+                        if (s.pin_number === null) {
+                            return { ...s, pin_number: -1, action: s.action || 'ON' };
+                        }
+
+                        return s;
+                    });
+                    this.sequenceModalOpen = true;
+                },
+
+                async saveSequenceConfig() {
+                    // 1. Prepare Payload (Map Frontend -1 back to Backend Global Actions)
+                    const payload = this.editedSequences.map(s => {
+                        if (s.pin_number === -1) {
+                            return {
+                                ...s,
+                                pin_number: null,
+                                action: s.action === 'ON' ? 'ALL_ON' : 'ALL_OFF'
+                            };
+                        }
+                        return s;
+                    });
+
+                    // 2. Validation
+                    const invalidStep = payload.find(s =>
+                        !['ALL_ON', 'ALL_OFF'].includes(s.action) &&
+                        !s.pin_number && s.pin_number !== 0
+                    );
+
+                    if (invalidStep) {
+                        alert('Please select a valid pin for all standard steps.');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/machines/control/${this.machine_id}/sequence/update`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= csrfToken %>' },
+                            body: JSON.stringify({ sequences: payload })
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            location.reload();
+                        } else {
+                            alert('Failed to save sequence: ' + (result.error || 'Unknown error'));
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('Network error saving sequence');
+                    }
+                },
+
+                async uploadFirmware() {
+                    if (!this.otaFile) return alert('Please select a .bin firmware file');
+                    if (!confirm('Are you sure you want to update the machine firmware? This will restart the machine.')) return;
+
+                    this.uploadingOTA = true;
+                    const formData = new FormData();
+                    formData.append('firmware', this.otaFile);
+
+                    try {
+                        const response = await fetch(`/machines/control/${this.machine_id}/ota`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-Token': '<%= csrfToken %>'
+                            },
+                            body: formData
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            this.showToast('Firmware Sent Successfully! Machine updating...');
+                            this.otaModalOpen = false;
+                            this.otaFile = null;
+                        } else {
+                            alert(result.error || 'Check if machine is online');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('Upload failed');
+                    } finally {
+                        this.uploadingOTA = false;
+                    }
+                }
+            }));
+        });
+    </script>
+
+    <%- include('../partials/footer') %>

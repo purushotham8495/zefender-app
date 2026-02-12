@@ -1,0 +1,321 @@
+<%- include('../partials/header') %>
+
+    <div class="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6" x-data="{}">
+        <div>
+            <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Machine Management</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Monitor, configure, and manage your
+                fleet of vending units in real-time.</p>
+        </div>
+        <% if(user && user.role==='admin' ) { %>
+            <button @click="$dispatch('open-modal', { mode: 'create' })"
+                class="group bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-8 rounded-2xl flex items-center shadow-[0_10px_25px_-5px_rgba(16,185,129,0.4)] transition-all active:scale-95 hover:-translate-y-0.5">
+                <div class="bg-white/20 p-1.5 rounded-lg mr-3 group-hover:rotate-90 transition-transform duration-300">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                Deploy New Unit
+            </button>
+            <% } %>
+    </div>
+
+    <!-- Error Alert -->
+    <% if(typeof error !=='undefined' && error) { %>
+        <div class="mb-6 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl relative"
+            role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline ml-1">
+                <%= error %>
+            </span>
+        </div>
+        <% } %>
+
+            <!-- Machines Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-12">
+                <% machines.forEach(machine=> { %>
+                    <div
+                        class="bg-white dark:bg-[#1e293b] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-slate-300 dark:border-slate-700/50 p-7 flex flex-col h-full transition-all hover:shadow-xl hover:border-indigo-500/30 dark:hover:border-indigo-500/30 group relative overflow-hidden">
+
+                        <!-- Premium Background Detail -->
+                        <div
+                            class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-colors">
+                        </div>
+
+                        <!-- Card Header -->
+                        <div class="flex justify-between items-start mb-6 relative z-10">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform shadow-inner">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3
+                                        class="text-xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">
+                                        <%= machine.machine_id %>
+                                    </h3>
+                                    <p
+                                        class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] font-black mt-1">
+                                        <%= machine.machine_name || 'UNNAMED UNIT' %>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <!-- Connectivity Status -->
+                                <span
+                                    class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all <%= machine.is_connected ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'text-red-500 bg-red-500/10 border border-red-500/20' %>">
+                                    <span
+                                        class="w-1.5 h-1.5 rounded-full <%= machine.is_connected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500' %>"></span>
+                                    <%= machine.is_connected ? 'Link Active' : 'Offline' %>
+                                </span>
+
+                                <div class="flex gap-1 mt-2">
+                                    <a href="/machines/control/<%= machine.machine_id %>"
+                                        class="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all border border-transparent shadow-sm"
+                                        title="Remote Control">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                    </a>
+                                    <button
+                                        @click="$dispatch('open-modal', { mode: 'edit', machine: <%= JSON.stringify(machine) %> })"
+                                        class="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all border border-transparent shadow-sm"
+                                        title="Edit Details">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </button>
+                                    <% if(user && user.role==='admin' ) { %>
+                                        <form action="/machines/delete/<%= machine.id %>" method="POST" class="inline"
+                                            onsubmit="return confirm('Delete this machine?')">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button type="submit"
+                                                class="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all border border-transparent shadow-sm">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                        <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="space-y-5 flex-grow relative z-10">
+                            <div
+                                class="flex justify-between items-center text-sm bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-700/30">
+                                <div class="flex flex-col">
+                                    <span
+                                        class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Assigned
+                                        Owner</span>
+                                    <span class="text-slate-900 dark:text-white font-bold mt-0.5">
+                                        <%= machine.owner ? machine.owner.username : 'Floating Unit' %>
+                                    </span>
+                                </div>
+                                <% if(user.role==='admin' ) { %>
+                                    <button
+                                        @click="$dispatch('open-modal', { mode: 'edit', machine: <%= JSON.stringify(machine) %> })"
+                                        class="bg-white dark:bg-slate-700 px-3 py-1.5 rounded-lg text-indigo-500 hover:text-indigo-400 text-[10px] font-black uppercase border border-slate-300 dark:border-slate-600 shadow-sm transition-all">Move</button>
+                                    <% } %>
+                            </div>
+
+                            <!-- Revenue Comparison -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div
+                                    class="bg-emerald-500/[0.03] dark:bg-emerald-500/[0.03] p-4 rounded-2xl border border-emerald-500/10 group-hover:bg-emerald-500/[0.06] transition-all">
+                                    <p
+                                        class="text-[10px] text-emerald-600/60 dark:text-emerald-500/40 uppercase tracking-widest font-black mb-1">
+                                        Today</p>
+                                    <p class="text-xl font-black text-slate-900 dark:text-white leading-none">₹<%=
+                                            machine.today_revenue %>
+                                    </p>
+                                </div>
+                                <div
+                                    class="bg-indigo-500/[0.03] dark:bg-indigo-500/[0.03] p-4 rounded-2xl border border-indigo-500/10 group-hover:bg-indigo-500/[0.06] transition-all">
+                                    <p
+                                        class="text-[10px] text-indigo-600/60 dark:text-indigo-500/40 uppercase tracking-widest font-black mb-1">
+                                        Total</p>
+                                    <p class="text-xl font-black text-slate-900 dark:text-white leading-none">₹<%=
+                                            machine.total_revenue %>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2.5 px-1 pb-2">
+                                <div
+                                    class="flex justify-between items-center bg-slate-50/50 dark:bg-transparent px-2 py-1.5 rounded-lg">
+                                    <span
+                                        class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Cost/Cycle</span>
+                                    <span class="text-slate-900 dark:text-slate-100 font-black text-sm">₹<%=
+                                            (machine.cleaning_cost || 0) %></span>
+                                </div>
+                                <div class="flex justify-between items-center px-2">
+                                    <span
+                                        class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Location</span>
+                                    <span class="text-slate-900 dark:text-slate-300 italic text-[11px] font-bold">
+                                        <%= machine.location || 'Unknown' %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Footer -->
+                        <div
+                            class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/50 flex flex-col gap-3 relative z-10">
+                            <a href="/machines/control/<%= machine.machine_id %>"
+                                class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_10px_20px_-5px_rgba(79,70,229,0.3)] transition-all hover:-translate-y-0.5 active:scale-95">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Control Unit
+                            </a>
+                            <div class="flex items-center justify-center gap-4">
+                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Installed:
+                                    <%= new Date(machine.createdAt).toLocaleDateString() %>
+                                </span>
+                                <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                                <span
+                                    class="text-[9px] font-black uppercase tracking-widest <%= machine.status === 'active' ? 'text-emerald-500' : 'text-red-500' %>">
+                                    <%= machine.status==='active' ? 'Operational' : 'Halted' %>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+            </div>
+
+            <% if(machines.length===0) { %>
+                <div class="py-24 text-center">
+                    <div
+                        class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+                        <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">No machines found</h3>
+                    <p class="text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-2">Start by deploying your first
+                        machine to manage it here.</p>
+                </div>
+                <% } %>
+
+                    <!-- Modal -->
+                    <div x-data="{ open: false, mode: 'create', machine: {} }" x-show="open"
+                        @open-modal.window="open = true; mode = $event.detail.mode; machine = $event.detail.machine || {}"
+                        x-cloak class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+                        aria-modal="true">
+                        <div
+                            class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                            <div x-show="open" x-transition.opacity
+                                class="fixed inset-0 bg-slate-900/60 transition-opacity backdrop-blur-sm"
+                                @click="open = false"></div>
+                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+                            <div x-show="open" x-transition.scale.95
+                                class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-300 dark:border-slate-700">
+                                <form
+                                    :action="mode === 'create' ? '/machines/create' : '/machines/update/' + machine.id"
+                                    method="POST">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <div class="px-8 pt-8 pb-6">
+                                        <div class="flex justify-between items-center mb-6">
+                                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white"
+                                                x-text="mode === 'create' ? 'Deploy Machine' : 'Configure Machine'">
+                                            </h3>
+                                            <button type="button" @click="open = false"
+                                                class="text-slate-400 hover:text-slate-500"><svg class="w-6 h-6"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg></button>
+                                        </div>
+
+                                        <div class="space-y-5">
+                                            <div>
+                                                <label
+                                                    class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Machine
+                                                    ID</label>
+                                                <input type="text" name="machine_id" required
+                                                    :value="machine.machine_id" :readonly="mode === 'edit'"
+                                                    class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
+                                                    :class="mode === 'edit' ? 'opacity-60 cursor-not-allowed' : ''">
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label
+                                                        class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Display
+                                                        Name</label>
+                                                    <input type="text" name="machine_name" :value="machine.machine_name"
+                                                        class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                                                </div>
+                                                <div>
+                                                    <label
+                                                        class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Cleaning
+                                                        Cost (₹)</label>
+                                                    <input type="number" step="0.01" name="cleaning_cost"
+                                                        :value="machine.cleaning_cost || 0"
+                                                        class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                                                </div>
+                                            </div>
+
+                                            <% if(user && user.role==='admin' ) { %>
+                                                <div>
+                                                    <label
+                                                        class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Assigned
+                                                        Owner</label>
+                                                    <select name="owner_id" :value="machine.owner_id"
+                                                        class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
+                                                        <option value="">-- No Owner Assigned --</option>
+                                                        <% owners.forEach(owner=> { %>
+                                                            <option value="<%= owner.id %>">
+                                                                <%= owner.username %>
+                                                            </option>
+                                                            <% }) %>
+                                                    </select>
+                                                </div>
+                                                <% } %>
+
+                                                    <div>
+                                                        <label
+                                                            class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Location</label>
+                                                        <input type="text" name="location" :value="machine.location"
+                                                            placeholder="e.g. Mall Entrance, Floor 1"
+                                                            class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                                                    </div>
+
+                                                    <div x-show="mode === 'edit'">
+                                                        <label
+                                                            class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Status</label>
+                                                        <select name="status" :value="machine.status"
+                                                            class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
+                                                            <option value="active">Active (Running)</option>
+                                                            <option value="inactive">Inactive (Offline)</option>
+                                                        </select>
+                                                    </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="px-8 pb-8 pt-4 flex gap-3">
+                                        <button type="submit"
+                                            class="flex-grow py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95"
+                                            x-text="mode === 'create' ? 'Deploy Machine' : 'Update Configuration'"></button>
+                                        <button type="button" @click="open = false"
+                                            class="py-3 px-6 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <%- include('../partials/footer') %>

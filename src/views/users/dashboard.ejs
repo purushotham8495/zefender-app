@@ -1,0 +1,692 @@
+<%- include('../partials/header') %>
+
+
+    <div class="mb-12 flex items-center gap-8">
+        <a href="/users"
+            class="group p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-300 dark:border-slate-800 text-slate-400 hover:text-indigo-500 transition-all shadow-sm hover:shadow-md">
+            <svg class="h-6 w-6 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <div class="flex-1">
+            <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                <%= owner.username %> <span class="text-indigo-500">.</span>
+            </h1>
+            <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-2 uppercase tracking-[0.2em] font-black">
+                Partner Insight Engine &bull; Active Since <%= new Date(owner.createdAt).toLocaleDateString() %>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- KPI Section -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <!-- Total Revenue -->
+        <div
+            class="bg-white dark:bg-[#1e293b] p-8 rounded-[2rem] shadow-sm border border-slate-300 dark:border-slate-700/50 flex items-center gap-6 group">
+            <div
+                class="w-20 h-20 rounded-3xl bg-emerald-500/10 dark:bg-emerald-500/5 flex items-center justify-center text-emerald-500 border border-emerald-500/10 group-hover:scale-110 transition-transform">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.406 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08.406-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Cumulative</p>
+                <h3 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">₹<%=
+                        kpis.totalRevenue.toLocaleString() %>
+                </h3>
+            </div>
+        </div>
+
+        <!-- Today's Revenue -->
+        <div
+            class="bg-white dark:bg-[#1e293b] p-8 rounded-[2rem] shadow-sm border border-slate-300 dark:border-slate-700/50 flex items-center gap-6 group">
+            <div
+                class="w-20 h-20 rounded-3xl bg-indigo-500/10 dark:bg-indigo-500/5 flex items-center justify-center text-indigo-500 border border-indigo-500/10 group-hover:scale-110 transition-transform">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Today's Pulse</p>
+                <h3 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">₹<%=
+                        kpis.todaySales.toLocaleString() %>
+                </h3>
+            </div>
+        </div>
+
+        <!-- Active Machines -->
+        <div
+            class="bg-white dark:bg-[#1e293b] p-8 rounded-[2rem] shadow-sm border border-slate-300 dark:border-slate-700/50 flex items-center gap-6 group">
+            <div
+                class="w-20 h-20 rounded-3xl bg-purple-500/10 dark:bg-purple-500/5 flex items-center justify-center text-purple-500 border border-purple-500/10 group-hover:scale-110 transition-transform">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Online Now</p>
+                <h3 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                    <%= kpis.activeMachines %><span class="text-xs text-slate-400 ml-1">Nodes</span>
+                </h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <!-- Revenue Trend -->
+        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-300 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                    </svg>
+                    Revenue Trend
+                </h3>
+                <select onchange="updateRevenueChart('<%= owner.id %>', this.value)"
+                    class="bg-slate-50 dark:bg-slate-700 border-none rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                    <option value="today" <%=currentRange==='today' ? 'selected' : '' %>>Today</option>
+                    <option value="7d" <%=currentRange==='7d' ? 'selected' : '' %>>7 Days</option>
+                    <option value="30d" <%=currentRange==='30d' ? 'selected' : '' %>>30 Days</option>
+                    <option value="3m" <%=currentRange==='3m' ? 'selected' : '' %>>3 Mo</option>
+                    <option value="6m" <%=currentRange==='6m' ? 'selected' : '' %>>6 Mo</option>
+                    <option value="all" <%=currentRange==='all' ? 'selected' : '' %>>All Time</option>
+                </select>
+            </div>
+            <div class="h-64">
+                <canvas id="revenueTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Peak Trading Hours -->
+        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-300 dark:border-slate-700">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Peak Trading Hours
+            </h3>
+            <div class="h-64">
+                <canvas id="peakHoursChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Machine Wise Breakdown -->
+        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-300 dark:border-slate-700">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                </svg>
+                Top Performing Units
+            </h3>
+            <div class="h-64">
+                <canvas id="machineBreakdownChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Activity Section (Moved Here) -->
+        <div
+            class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-300 dark:border-slate-700 h-full flex flex-col">
+            <h2 class="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Recent Activity
+            </h2>
+            <div class="overflow-y-auto flex-grow custom-scrollbar" style="max-height: 300px;">
+                <table class="w-full text-left border-collapse">
+                    <tbody
+                        class="text-sm font-medium text-slate-600 dark:text-slate-300 divide-y divide-slate-100 dark:divide-slate-700/50">
+                        <% if (locals.recentActivity && recentActivity.length> 0) { %>
+                            <% recentActivity.forEach((txn, index)=> { %>
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
+                                    data-index="<%= index %>" onclick="openTxnModal(this.getAttribute('data-index'))">
+                                    <td class="p-3">
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-slate-800 dark:text-white">
+                                                <%= txn.machine_id %>
+                                            </span>
+                                            <span class="text-[10px] text-slate-400">
+                                                <%= new Date(txn.event_time).toLocaleTimeString([], {hour: '2-digit' ,
+                                                    minute:'2-digit'}) %>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="p-3 text-right">
+                                        <div class="font-bold text-emerald-500">₹<%=
+                                                parseFloat(txn.amount).toLocaleString() %>
+                                        </div>
+                                        <span
+                                            class="text-[9px] uppercase font-black <%= txn.trigger_status === 'processed' ? 'text-indigo-500' : (txn.trigger_status === 'failed' ? 'text-red-500 animate-pulse' : 'text-slate-400') %>">
+                                            <%= txn.trigger_status==='processed' ? 'Processed' :
+                                                (txn.trigger_status==='failed' ? 'Trigger Failed' : 'Captured' ) %>
+                                        </span>
+                                    </td>
+                                    <td class="p-3 text-right">
+                                        <button data-index="<%= index %>"
+                                            onclick="event.stopPropagation(); openTxnModal(this.getAttribute('data-index'))"
+                                            class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg
+                                            text-indigo-500 transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="3"
+                                                class="p-8 text-center text-slate-400 font-medium text-xs uppercase tracking-wider">
+                                                No recent transactions</td>
+                                        </tr>
+                                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-8 flex items-center gap-3">
+        <div class="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+        </div>
+        <h2 class="text-xl font-bold text-slate-800 dark:text-white">Deployed Units</h2>
+    </div>
+
+    <!-- Machines Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
+        <% machines.forEach(machine=> { %>
+            <div
+                class="bg-white dark:bg-[#1e293b] rounded-3xl p-6 border border-slate-300 dark:border-slate-700/50 shadow-xl flex flex-col relative overflow-hidden group hover:border-indigo-500/30 transition-all">
+                <!-- Status Badge (Real-time Connectivity) -->
+                <div class="absolute top-6 right-6">
+                    <% if(machine.is_connected) { %>
+                        <span
+                            class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 border-emerald-500/20 border px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            ONLINE
+                        </span>
+                        <% } else { %>
+                            <span
+                                class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-500/10 border-slate-500/20 border px-2 py-0.5 rounded-full">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                                OFFLINE
+                            </span>
+                            <% } %>
+                </div>
+
+                <!-- Header -->
+                <div class="flex items-start gap-4 mb-8">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-indigo-500 shrink-0 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                            <%= machine.machine_id %>
+                        </h3>
+                        <p
+                            class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
+                            <%= machine.machine_name || 'Machine Node' %>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Owner Info -->
+                <div
+                    class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-700/50 mb-6 flex justify-between items-center">
+                    <div>
+                        <p
+                            class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">
+                            Assigned Owner
+                        </p>
+                        <p class="text-sm font-bold text-slate-800 dark:text-white">
+                            <%= owner.username %>
+                        </p>
+                    </div>
+                    <!-- Action Icons -->
+                    <div class="flex gap-2">
+                        <a href="/machines/control/<%= machine.machine_id %>"
+                            class="p-2 rounded-lg bg-white dark:bg-slate-700/50 text-slate-400 hover:text-indigo-500 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-300 dark:border-transparent">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div
+                        class="bg-emerald-500/5 dark:bg-slate-800/30 p-4 rounded-2xl border border-emerald-500/10 dark:border-slate-700/30">
+                        <p
+                            class="text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2">
+                            Today</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white">₹<%=
+                                parseFloat(machine.today_revenue || 0).toLocaleString() %>
+                        </p>
+                    </div>
+                    <div
+                        class="bg-indigo-500/5 dark:bg-slate-800/30 p-4 rounded-2xl border border-indigo-500/10 dark:border-slate-700/30">
+                        <p
+                            class="text-[10px] font-black text-indigo-600 dark:text-indigo-500 uppercase tracking-widest mb-2">
+                            Total</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white">₹<%=
+                                parseFloat(machine.total_revenue || 0).toLocaleString() %>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Details List -->
+                <div class="space-y-3 mb-8">
+                    <div class="flex justify-between items-center text-sm px-2">
+                        <span
+                            class="font-bold text-slate-400 dark:text-slate-500 uppercase text-[10px] tracking-widest">Cost/Cycle</span>
+                        <span class="font-bold text-slate-800 dark:text-white">₹<%= machine.cleaning_cost || 0 %></span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm px-2">
+                        <span
+                            class="font-bold text-slate-400 dark:text-slate-500 uppercase text-[10px] tracking-widest">Location</span>
+                        <span class="font-bold text-slate-800 dark:text-white italic text-[11px]">
+                            <%= machine.location || 'Unknown' %>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Control Button -->
+                <a href="/machines/control/<%= machine.machine_id %>"
+                    class="mt-auto w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Control Unit
+                </a>
+
+                <!-- Footer -->
+                <div
+                    class="mt-6 flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-700/30">
+                    <span
+                        class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Installed:
+                        <%= new Date(machine.createdAt || Date.now()).toLocaleDateString() %>
+                    </span>
+                    <span
+                        class="text-[9px] font-black uppercase tracking-widest <%= machine.status === 'active' ? 'text-emerald-500' : 'text-red-500' %>">
+                        <%= machine.status==='active' ? 'OPERATIONAL' : 'HALTED' %>
+                    </span>
+                </div>
+            </div>
+            <% }) %>
+    </div>
+
+    <!-- Safely inject data using a script tag with type application/json -->
+    <script type="application/json" id="charts-data">
+        <%- JSON.stringify(chartsData) %>
+    </script>
+
+    <script>
+        // Read charts data safely from the DOM
+        let chartsData = {};
+        try {
+            const dataElement = document.getElementById('charts-data');
+            if (dataElement) {
+                chartsData = JSON.parse(dataElement.textContent);
+            }
+        } catch (e) {
+            console.error("Failed to parse charts data:", e);
+        }
+
+        // Global variables for global dashboard
+        const isDark = document.documentElement.classList.contains('dark');
+
+        // Theme Colors
+        const getThemeColors = (isDark) => ({
+            grid: isDark ? '#334155' : '#e2e8f0',
+            text: isDark ? '#94a3b8' : '#64748b',
+            bg: isDark ? '#1e293b' : '#ffffff'
+        });
+
+        function initCharts() {
+            try {
+                const isDark = document.documentElement.classList.contains('dark');
+                const theme = getThemeColors(isDark);
+
+                if (typeof Chart === 'undefined') {
+                    console.error("Chart.js is not loaded.");
+                    return;
+                }
+
+                Chart.defaults.font.family = "'Inter', sans-serif";
+                Chart.defaults.color = theme.text;
+                Chart.defaults.borderColor = theme.grid;
+
+                // Direct access - no double parsing needed
+                const revenueTrendData = chartsData.revenueTrend || [];
+                const peakHoursData = chartsData.peakHours || [];
+                const breakdownData = chartsData.machineBreakdown || [];
+
+                console.log("Revenue Data:", revenueTrendData);
+
+                // 1. Revenue
+                const revCtx = document.getElementById('revenueTrendChart');
+                if (revCtx) {
+                    if (window.revenueChart) window.revenueChart.destroy();
+
+                    const gradient = revCtx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+                    if (isDark) {
+                        gradient.addColorStop(0, 'rgba(129, 140, 248, 0.5)'); // Indigo 400
+                        gradient.addColorStop(1, 'rgba(30, 41, 59, 0)');     // Transparent
+                    } else {
+                        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // Indigo 500
+                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    }
+
+                    window.revenueChart = new Chart(revCtx, {
+                        type: 'line',
+                        data: {
+                            labels: revenueTrendData.map(r => r.date ? new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''),
+                            datasets: [{
+                                label: 'Revenue',
+                                data: revenueTrendData.map(r => parseFloat(r.total || 0)),
+                                borderColor: isDark ? '#818cf8' : '#6366f1',
+                                backgroundColor: gradient,
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: isDark ? '#818cf8' : '#6366f1',
+                                pointHoverRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: theme.grid, borderDash: [2, 4] },
+                                    ticks: { color: theme.text }
+                                },
+                                x: { grid: { display: false }, ticks: { color: theme.text } }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+
+                // 2. Peak Hours
+                const peakCtx = document.getElementById('peakHoursChart');
+                if (peakCtx) {
+                    if (window.peakChart) window.peakChart.destroy();
+                    window.peakChart = new Chart(peakCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: peakHoursData.map(p => `${p.hour}:00`),
+                            datasets: [{
+                                label: 'Transactions',
+                                data: peakHoursData.map(p => p.count),
+                                backgroundColor: isDark ? '#f472b6' : '#ec4899',
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: theme.grid },
+                                    ticks: { color: theme.text }
+                                },
+                                x: { grid: { display: false }, ticks: { color: theme.text } }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+
+                // 3. Machine Breakdown
+                const breakCtx = document.getElementById('machineBreakdownChart');
+                if (breakCtx) {
+                    if (window.breakChart) window.breakChart.destroy();
+                    window.breakChart = new Chart(breakCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: breakdownData.map(b => b.name),
+                            datasets: [{
+                                label: 'Revenue',
+                                data: breakdownData.map(b => b.revenue),
+                                backgroundColor: [
+                                    '#8b5cf6', // Violet
+                                    '#f59e0b', // Amber
+                                    '#10b981', // Emerald
+                                    '#ef4444'  // Red
+                                ],
+                                borderRadius: 6,
+                                indexAxis: 'y'
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    grid: { color: theme.grid },
+                                    ticks: { color: theme.text }
+                                },
+                                y: { grid: { display: false }, ticks: { color: theme.text } }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Critical error in initCharts:", err);
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initCharts);
+
+        // Dark Mode Observer
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    initCharts();
+                }
+            });
+        });
+        observer.observe(document.documentElement, { attributes: true });
+
+        async function updateRevenueChart(ownerId, range) {
+            try {
+                const response = await fetch(`/users/dashboard/${ownerId}/revenue-chart?range=${range}`);
+                const data = await response.json();
+
+                if (window.revenueChart && data.revenue) {
+                    window.revenueChart.data.labels = data.revenue.map(r => r.date ? new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '');
+                    window.revenueChart.data.datasets[0].data = data.revenue.map(r => parseFloat(r.total_revenue || 0));
+                    window.revenueChart.update();
+                }
+            } catch (error) {
+                console.error('Failed to update revenue chart:', error);
+            }
+        }
+    </script>
+
+    <!-- Transaction Modal -->
+    <div id="txnModal" class="fixed inset-0 z-50 hidden" style="backdrop-filter: blur(4px);">
+        <div class="absolute inset-0 bg-slate-900/50" onclick="closeTxnModal()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
+            <div
+                class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-300 dark:border-slate-700">
+                <!-- Modal Content Same as Before -->
+                <div
+                    class="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                    <h3 class="text-lg font-black text-slate-900 dark:text-white tracking-tight">Transaction Details
+                    </h3>
+                    <button onclick="closeTxnModal()"
+                        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div class="text-center">
+                        <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total Amount
+                        </div>
+                        <div class="text-5xl font-black text-slate-900 dark:text-white tracking-tight" id="modalAmount">
+                            ₹0</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div
+                            class="p-4 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                            <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Machine
+                                Node</div>
+                            <div class="text-sm font-bold text-slate-800 dark:text-white" id="modalMachineId"></div>
+                        </div>
+                        <div
+                            class="p-4 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                            <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Vending
+                                Status
+                            </div>
+                            <div class="text-sm font-bold"
+                                :class="activeTx?.trigger_status === 'processed' ? 'text-indigo-500' : 'text-red-500'"
+                                id="modalVendingStatus"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div
+                            class="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700/50">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Transaction ID</span>
+                            <span class="text-xs font-mono text-slate-600 dark:text-slate-300" id="modalTxnId"></span>
+                        </div>
+                        <div
+                            class="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700/50">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Timestamp</span>
+                            <span class="text-xs font-mono text-slate-600 dark:text-slate-300" id="modalDate"></span>
+                        </div>
+                        <div
+                            class="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700/50">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Method</span>
+                            <span class="text-xs font-mono text-slate-600 dark:text-slate-300" id="modalMethod"></span>
+                        </div>
+                        <div
+                            class="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700/50">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Payer</span>
+                            <span class="text-xs font-mono text-slate-600 dark:text-slate-300" id="modalPayer"></span>
+                        </div>
+                        <div
+                            class="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-700/50">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Vending Time</span>
+                            <span class="text-xs font-mono text-indigo-500 font-bold" id="modalVendingTime"></span>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">UPI ID</span>
+                            <span class="text-xs font-mono text-indigo-500 font-bold" id="modalUpi"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
+                    <button id="triggerBtn" onclick="triggerRemoteSequence()"
+                        class="flex-1 py-3 bg-indigo-600 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl hover:bg-indigo-500 transition-all shadow-lg active:scale-95 disabled:opacity-50">Initiate
+                        Machine</button>
+                    <button onclick="closeTxnModal()"
+                        class="flex-1 py-3 bg-slate-900 dark:bg-slate-800 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl hover:bg-slate-800 transition-all shadow-lg active:scale-95">Close
+                        Receipt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inject Modal Data -->
+    <script>
+        const recentTransactions = JSON.parse(atob('<%- Buffer.from(JSON.stringify(recentActivity || [])).toString("base64") %>'));
+
+        function openTxnModal(index) {
+            try {
+                const txn = recentTransactions[index];
+                if (!txn) return;
+
+                document.getElementById('modalAmount').textContent = '₹' + parseFloat(txn.amount || 0).toLocaleString();
+                document.getElementById('modalMachineId').textContent = txn.machine_id;
+                document.getElementById('modalVendingStatus').textContent = (txn.trigger_status || 'Pending').toUpperCase();
+                document.getElementById('modalTxnId').textContent = txn.razorpay_payment_id || txn.id || 'N/A';
+                document.getElementById('modalDate').textContent = new Date(txn.event_time).toLocaleString();
+                document.getElementById('modalMethod').textContent = txn.payment_method || 'QR Scan';
+                document.getElementById('modalPayer').textContent = txn.customer_name || 'Anonymous';
+                document.getElementById('modalUpi').textContent = txn.vpa || 'N/A';
+                document.getElementById('modalVendingTime').textContent = txn.processed_at ? new Date(txn.processed_at).toLocaleString() : 'Not Processed';
+
+                document.getElementById('txnModal').classList.remove('hidden');
+            } catch (e) { console.error('Error opening modal', e); }
+        }
+
+        function closeTxnModal() {
+            document.getElementById('txnModal').classList.add('hidden');
+        }
+
+        async function triggerRemoteSequence() {
+            const machineId = document.getElementById('modalMachineId').textContent;
+            if (!machineId) return;
+
+            const btn = document.getElementById('triggerBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Triggering...';
+
+            try {
+                const response = await fetch(`/machines/control/${machineId}/sequence`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': '<%= csrfToken %>'
+                    },
+                    body: JSON.stringify({ transaction_id: document.getElementById('modalTxnId').textContent })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Sequence initiated successfully!');
+                } else {
+                    alert('Initiation failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Cloud connection error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+    </script>
+
+    <%- include('../partials/footer') %>

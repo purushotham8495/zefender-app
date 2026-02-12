@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zefender &bull; Secure Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+
+        // Theme initialization
+        if (localStorage.getItem('darkMode') === 'true' ||
+            (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <style>
+        body {
+            transition: background-color 0.5s ease;
+        }
+
+        @keyframes pulse-slow {
+
+            0%,
+            100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.05);
+            }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 8s infinite ease-in-out;
+        }
+    </style>
+</head>
+
+<body
+    class="min-h-screen bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-6 overflow-hidden transition-colors duration-500">
+    <!-- Background Decor -->
+    <div
+        class="fixed top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 dark:bg-indigo-500/10 rounded-full blur-[120px] -z-10 animate-pulse-slow">
+    </div>
+    <div class="fixed bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-[120px] -z-10 animate-pulse-slow"
+        style="animation-delay: -4s"></div>
+
+    <div class="w-full max-w-md relative">
+        <div
+            class="bg-white dark:bg-white/[0.03] backdrop-blur-xl glow rounded-[2.5rem] p-10 md:p-12 relative overflow-hidden border border-slate-300 dark:border-white/10 shadow-2xl">
+            <!-- Header -->
+            <div class="text-center mb-10 relative z-10">
+                <div
+                    class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-slate-100 dark:bg-white/[0.03] border border-slate-300 dark:border-white/10 mb-6 group transition-all duration-500 hover:scale-110 hover:border-indigo-500/30 shadow-inner">
+                    <svg class="w-10 h-10 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h1
+                    class="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-2 uppercase tracking-[0.05em]">
+                    Zefender</h1>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.2em] px-4">
+                    Secure Network Access
+                    Protocol</p>
+            </div>
+
+            <!-- Error State -->
+            <% if(error) { %>
+                <div
+                    class="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div
+                        class="flex-shrink-0 w-8 h-8 rounded-xl bg-red-500/20 flex items-center justify-center text-red-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <p class="text-[11px] font-black text-red-400 uppercase tracking-wider leading-relaxed">
+                        <%= error %>
+                    </p>
+                </div>
+                <% } %>
+
+                    <!-- Form -->
+                    <form action="/login" method="POST" class="space-y-6 relative z-10">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                        <div class="space-y-2">
+                            <label
+                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] ml-2">Terminal
+                                Identity</label>
+                            <div class="relative group">
+                                <input type="text" name="username" required
+                                    class="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-300 dark:border-white/10 rounded-2xl px-6 py-4 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/30 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700 shadow-inner"
+                                    placeholder="USERNAME / EMAIL / NODE ID">
+                                <div
+                                    class="absolute inset-0 rounded-2xl bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label
+                                class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] ml-2">Secure
+                                Passcode</label>
+                            <div class="relative group">
+                                <input type="password" name="password" required
+                                    class="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-300 dark:border-white/10 rounded-2xl px-6 py-4 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/30 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700 shadow-inner"
+                                    placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
+                                <div
+                                    class="absolute inset-0 rounded-2xl bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit"
+                                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] uppercase tracking-[0.3em] py-5 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-indigo-600/20 group overflow-hidden relative">
+                                <span class="relative z-10">Authenticate</span>
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000">
+                                </div>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Footer Details -->
+                    <div
+                        class="mt-10 pt-8 border-t border-slate-100 dark:border-white/5 flex flex-col items-center gap-4">
+                        <p class="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em]">
+                            Encrypted Session
+                            (AES-256)</p>
+                        <div class="flex gap-1.5">
+                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
+                                style="animation-delay: 0.2s"></div>
+                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
+                                style="animation-delay: 0.4s"></div>
+                        </div>
+                    </div>
+        </div>
+
+        <!-- System Status Tags -->
+        <div class="mt-8 flex justify-center gap-8">
+            <div class="flex flex-col items-center gap-1">
+                <span class="text-[8px] font-black text-slate-700 uppercase tracking-widest">Network Status</span>
+                <span class="text-[9px] font-black text-emerald-500 uppercase">Operational</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+                <span class="text-[8px] font-black text-slate-700 uppercase tracking-widest">Global Payouts</span>
+                <span class="text-[9px] font-black text-indigo-400 uppercase">Synced</span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

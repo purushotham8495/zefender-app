@@ -1,0 +1,614 @@
+<%- include('partials/header') %>
+
+    <div class="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+        <div>
+            <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Global Dashboard</h1>
+            <div class="flex items-center gap-2 mt-2">
+                <span class="relative flex h-2 w-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
+                    Network Live &bull; Updated <span x-text="new Date().toLocaleTimeString()"></span>
+                </span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+        <!-- Total Revenue -->
+        <div
+            class="bg-white dark:bg-[#1e293b] rounded-3xl p-7 border border-slate-300 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+            <div
+                class="absolute -top-10 -right-10 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl transition-all group-hover:bg-indigo-500/10">
+            </div>
+            <div class="flex flex-col relative z-10">
+                <span
+                    class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Total
+                    Assets</span>
+                <div class="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1">
+                    <span class="text-indigo-500 text-lg">₹</span>
+                    <%= kpis.totalRevenue.toLocaleString() %>
+                </div>
+                <div class="mt-4 flex items-center gap-2">
+                    <span
+                        class="bg-indigo-500/10 text-indigo-500 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Lifetime</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions -->
+        <div
+            class="bg-white dark:bg-[#1e293b] rounded-3xl p-7 border border-slate-300 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+            <div
+                class="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl transition-all group-hover:bg-emerald-500/10">
+            </div>
+            <div class="flex flex-col relative z-10">
+                <span
+                    class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Total
+                    Flux</span>
+                <div class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                    <%= kpis.totalTransactions.toLocaleString() %>
+                </div>
+                <p
+                    class="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Processed Events
+                </p>
+            </div>
+        </div>
+
+        <!-- Today's Sales -->
+        <div
+            class="bg-white dark:bg-[#1e293b] rounded-3xl p-7 border border-slate-300 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+            <div
+                class="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl transition-all group-hover:bg-amber-500/10">
+            </div>
+            <div class="flex flex-col relative z-10">
+                <span
+                    class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Daily
+                    Pulse</span>
+                <div class="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1">
+                    <span class="text-amber-500 text-lg">₹</span>
+                    <%= kpis.todaySales.toLocaleString() %>
+                </div>
+                <div class="mt-4 flex items-center gap-2">
+                    <span class="text-emerald-500 flex items-center gap-1 text-[10px] font-black uppercase">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        Midnight Reset
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Machines -->
+        <div
+            class="bg-white dark:bg-[#1e293b] rounded-3xl p-7 border border-slate-300 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+            <div
+                class="absolute -top-10 -right-10 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl transition-all group-hover:bg-purple-500/10">
+            </div>
+            <div class="flex flex-col relative z-10">
+                <span
+                    class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Nodes
+                    Live</span>
+                <div class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                    <%= kpis.activeMachines %>
+                </div>
+                <div class="mt-4 flex items-center gap-2">
+                    <span
+                        class="bg-purple-500/10 text-purple-500 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">Verified
+                        Link</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AOV -->
+        <div
+            class="bg-white dark:bg-[#1e293b] rounded-3xl p-7 border border-slate-300 dark:border-slate-700/50 shadow-sm relative overflow-hidden group">
+            <div
+                class="absolute -top-10 -right-10 w-24 h-24 bg-orange-500/5 rounded-full blur-2xl transition-all group-hover:bg-orange-500/10">
+            </div>
+            <div class="flex flex-col relative z-10">
+                <span
+                    class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Efficiency
+                    Index</span>
+                <div class="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1">
+                    <span class="text-orange-500 text-sm">₹</span>
+                    <%= kpis.aov %>
+                </div>
+                <p class="mt-4 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em]">
+                    Avg.
+                    Yield / Transact</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Revenue Logic Chart -->
+        <div
+            class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-300 dark:border-slate-700 transition-colors">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-slate-800 dark:text-white">Revenue Trend</h3>
+                <select onchange="updateRevenueChart(this.value)"
+                    class="bg-slate-100 dark:bg-slate-700 border-none rounded-lg px-3 py-1 text-xs font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                    <option value="today" <%=currentRange==='today' ? 'selected' : '' %>>Today</option>
+                    <option value="7d" <%=currentRange==='7d' ? 'selected' : '' %>>7 Days</option>
+                    <option value="30d" <%=currentRange==='30d' ? 'selected' : '' %>>30 Days</option>
+                    <option value="3m" <%=currentRange==='3m' ? 'selected' : '' %>>3 Months</option>
+                    <option value="6m" <%=currentRange==='6m' ? 'selected' : '' %>>6 Months</option>
+                    <option value="all" <%=currentRange==='all' ? 'selected' : '' %>>All Time</option>
+                </select>
+            </div>
+            <% if (!charts.revenueByDay || charts.revenueByDay.length===0) { %>
+                <div class="relative h-72 w-full flex items-center justify-center">
+                    <div class="text-slate-400 dark:text-slate-600 text-sm">No revenue data available</div>
+                </div>
+                <% } else { %>
+                    <div class="relative h-72 w-full"><canvas id="revenueChart"></canvas></div>
+                    <% } %>
+        </div>
+
+        <!-- Machine Sales -->
+        <div
+            class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-300 dark:border-slate-700 transition-colors">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">Top Machines</h3>
+            <% if (!charts.machineSales || charts.machineSales.length===0) { %>
+                <div class="relative h-72 w-full flex items-center justify-center">
+                    <div class="text-slate-400 dark:text-slate-600 text-sm">No machine data available</div>
+                </div>
+                <% } else { %>
+                    <div class="relative h-72 w-full"><canvas id="machineChart"></canvas></div>
+                    <% } %>
+        </div>
+
+        <!-- Payment Method Split -->
+        <div
+            class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-300 dark:border-slate-700 transition-colors">
+            <h3 class="text-lg font-semibold text-slate-800 dark:text-white mb-4">Payment Methods</h3>
+            <% if (!charts.methodSplit || charts.methodSplit.length===0) { %>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <div class="text-slate-400 dark:text-slate-600 text-sm self-center">No payment data available
+                    </div>
+                </div>
+                <% } else { %>
+                    <div class="relative h-64 w-full flex justify-center"><canvas id="methodChart"></canvas></div>
+                    <% } %>
+        </div>
+
+        <!-- Peak Trading Hours (New) -->
+        <div
+            class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-300 dark:border-slate-700 transition-colors">
+            <h3 class="text-lg font-semibold text-slate-800 dark:text-white mb-4">Peak Trading Hours</h3>
+            <div class="relative h-72 w-full"><canvas id="peakHoursChart"></canvas></div>
+        </div>
+
+        <!-- Owner Comparison (Admin Only) -->
+        <% if (locals.user && locals.user.role==='admin' ) { %>
+            <div
+                class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-300 dark:border-slate-700 transition-colors col-span-1 lg:col-span-2">
+                <h3 class="text-lg font-semibold text-slate-800 dark:text-white mb-4">Owner Performance Comparison
+                </h3>
+                <div class="relative h-80 w-full"><canvas id="ownerChart"></canvas></div>
+            </div>
+            <% } %>
+
+                <!-- Recent Activity Feed -->
+                <div
+                    class="bg-white dark:bg-[#1e293b] p-8 rounded-3xl shadow-sm border border-slate-300 dark:border-slate-700/50 transition-colors col-span-1 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-8">
+                        <h3 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Recent Activity
+                        </h3>
+                        <span
+                            class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">Live
+                            Monitor</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr
+                                    class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">
+                                    <th class="pb-4">Timeline</th>
+                                    <th class="pb-4">Node ID</th>
+                                    <th class="pb-4">Amount</th>
+                                    <th class="pb-4">Method</th>
+                                    <th class="pb-4 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-700 dark:text-slate-300">
+                                <% if (recentActivity && recentActivity.length> 0) { %>
+                                    <% recentActivity.forEach(txn=> { %>
+                                        <tr
+                                            class="group border-b border-slate-50 dark:border-slate-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-all">
+                                            <td class="py-4 font-mono text-[11px] text-slate-400">
+                                                <%= new Date(txn.event_time).toLocaleString('en-US', {hour: '2-digit' ,
+                                                    minute:'2-digit', second:'2-digit'}) %>
+                                            </td>
+                                            <td
+                                                class="py-4 font-black tracking-tight text-slate-900 dark:text-slate-200">
+                                                <%= txn.machine_id %>
+                                            </td>
+                                            <td class="py-4 font-black text-indigo-500">
+                                                ₹<%= parseFloat(txn.amount).toFixed(2) %>
+                                            </td>
+                                            <td class="py-4">
+                                                <div class="flex items-center gap-2">
+                                                    <span
+                                                        class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                                                    <span class="text-xs font-bold uppercase tracking-tight">
+                                                        <%= txn.payment_method %>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="py-4 text-right">
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest
+                                                    <%= txn.payment_status === 'captured' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20' %>">
+                                                    <%= txn.payment_status==='captured' ? 'Clear' : txn.payment_status
+                                                        %>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                                            <% } else { %>
+                                                <tr>
+                                                    <td colspan="5" class="py-12 text-center">
+                                                        <div class="flex flex-col items-center opacity-20">
+                                                            <svg class="w-12 h-12 mb-2" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path
+                                                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                                                                </path>
+                                                            </svg>
+                                                            <h3 class="text-sm font-black uppercase tracking-widest">
+                                                                Stagnant Air</h3>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+    </div>
+
+    <!-- Error container for debugging -->
+    <div id="js-error-container" class="fixed top-0 left-0 w-full z-50 pointer-events-none p-4"></div>
+    <script>
+        window.onerror = function (message, source, lineno, colno, error) {
+            const container = document.getElementById('js-error-container');
+            const errDiv = document.createElement('div');
+            errDiv.className = 'bg-red-500 text-white p-4 rounded shadow-lg mb-2 pointer-events-auto';
+            errDiv.innerHTML = '<strong>JS Error:</strong> ' + message + '<br><small>' + source + ':' + lineno + '</small>';
+            container.appendChild(errDiv);
+        };
+    </script>
+    <script>
+        // Inject Data Globally - Safer Method
+        try {
+            const rawChartsJSON = JSON.parse(atob('<%- Buffer.from(JSON.stringify(chartsJSON)).toString("base64") %>'));
+            window.dashboardData = {
+                revenue: JSON.parse(rawChartsJSON.revenue),
+                methods: JSON.parse(rawChartsJSON.methods),
+                machines: JSON.parse(rawChartsJSON.machines),
+                peakHours: JSON.parse(rawChartsJSON.peakHours),
+                ownerComparison: JSON.parse(rawChartsJSON.ownerComparison)
+            };
+        } catch (e) {
+            console.error("Failed to parse dashboard data", e);
+            window.dashboardData = { revenue: [], methods: [], machines: [], peakHours: [], ownerComparison: [] };
+        }
+    </script>
+
+    <script>
+        window.addEventListener('load', function () {
+            const data = window.dashboardData;
+            console.log('Initializing Charts with:', data);
+
+            let charts = {};
+
+            const getThemeColors = (isDark) => ({
+                grid: isDark ? '#334155' : '#e2e8f0',
+                text: isDark ? '#94a3b8' : '#64748b',
+                bg: isDark ? '#1e293b' : '#ffffff'
+            });
+
+            function initCharts() {
+                const isDark = document.documentElement.classList.contains('dark');
+                const theme = getThemeColors(isDark);
+
+                Chart.defaults.font.family = "'Inter', sans-serif";
+                Chart.defaults.color = theme.text;
+                Chart.defaults.borderColor = theme.grid;
+
+                // 1. Revenue
+                const revCtx = document.getElementById('revenueChart');
+                if (revCtx) {
+                    if (charts.revenue) charts.revenue.destroy();
+
+                    // Create gradient
+                    const gradient = revCtx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+                    if (isDark) {
+                        gradient.addColorStop(0, 'rgba(129, 140, 248, 0.5)'); // Indigo 400
+                        gradient.addColorStop(1, 'rgba(30, 41, 59, 0)');     // Transparent
+                    } else {
+                        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // Indigo 500
+                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    }
+
+                    window.dashboardData.charts = charts; // Store reference globally for updates
+
+                    charts.revenue = new Chart(revCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.revenue.map(d => {
+                                const date = new Date(d.date);
+                                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            }),
+                            datasets: [{
+                                label: 'Revenue (₹)',
+                                data: data.revenue.map(d => d.total_revenue),
+                                borderColor: isDark ? '#818cf8' : '#6366f1', // Indigo 400 : Indigo 500
+                                backgroundColor: gradient,
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: isDark ? '#818cf8' : '#6366f1',
+                                pointBorderColor: isDark ? '#1e293b' : '#fff',
+                                pointBorderWidth: 2,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: isDark ? '#334155' : '#e2e8f0', borderDash: [2, 4] },
+                                    ticks: { color: theme.text }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { color: theme.text }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: isDark ? '#334155' : '#fff',
+                                    titleColor: isDark ? '#f8fafc' : '#1e293b',
+                                    bodyColor: isDark ? '#cbd5e1' : '#475569',
+                                    borderColor: isDark ? '#475569' : '#e2e8f0',
+                                    borderWidth: 1,
+                                    padding: 10,
+                                    displayColors: false,
+                                    callbacks: {
+                                        label: function (context) {
+                                            return 'Revenue: ₹' + context.parsed.y.toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 2. Machines
+                const macCtx = document.getElementById('machineChart');
+                if (macCtx) {
+                    if (charts.machines) charts.machines.destroy();
+                    charts.machines = new Chart(macCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.machines.map(d => d.machine_id),
+                            datasets: [{
+                                label: 'Sales (₹)',
+                                data: data.machines.map(d => d.total_sales),
+                                backgroundColor: isDark ? '#38bdf8' : '#0ea5e9', // Sky 400 : Sky 500
+                                borderRadius: 6,
+                                hoverBackgroundColor: isDark ? '#0ea5e9' : '#0284c7'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: isDark ? '#334155' : '#e2e8f0', borderDash: [2, 4] },
+                                    ticks: { color: theme.text }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { color: theme.text }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: isDark ? '#334155' : '#fff',
+                                    titleColor: isDark ? '#f8fafc' : '#1e293b',
+                                    bodyColor: isDark ? '#cbd5e1' : '#475569',
+                                    borderColor: isDark ? '#475569' : '#e2e8f0',
+                                    borderWidth: 1,
+                                    padding: 10,
+                                    callbacks: {
+                                        label: function (context) {
+                                            return 'Sales: ₹' + context.parsed.y.toLocaleString();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // 3. Methods
+                const metCtx = document.getElementById('methodChart');
+                if (metCtx) {
+                    if (charts.methods) charts.methods.destroy();
+                    charts.methods = new Chart(metCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.methods.map(d => d.payment_method.toUpperCase()),
+                            datasets: [{
+                                data: data.methods.map(d => d.count),
+                                backgroundColor: [
+                                    '#8b5cf6', // Violet
+                                    '#f59e0b', // Amber
+                                    '#10b981', // Emerald
+                                    '#ef4444'  // Red
+                                ],
+                                borderWidth: 0,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '70%',
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        color: theme.text,
+                                        font: { size: 12 },
+                                        boxWidth: 12,
+                                        padding: 15
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: isDark ? '#334155' : '#fff',
+                                    bodyColor: isDark ? '#cbd5e1' : '#475569',
+                                    borderColor: isDark ? '#475569' : '#e2e8f0',
+                                    borderWidth: 1,
+                                    callbacks: {
+                                        label: function (context) {
+                                            const label = context.label || '';
+                                            const value = context.parsed || 0;
+                                            const total = context.chart._metasets[context.datasetIndex].total;
+                                            const percentage = Math.round((value / total) * 100) + '%';
+                                            return `${label}: ${value} (${percentage})`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                // 4. Peak Hours
+                const peakCtx = document.getElementById('peakHoursChart');
+                if (peakCtx) {
+                    if (charts.peakHours) charts.peakHours.destroy();
+                    charts.peakHours = new Chart(peakCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.peakHours.map(d => `${d.hour}:00`),
+                            datasets: [{
+                                label: 'Transactions',
+                                data: data.peakHours.map(d => d.count),
+                                backgroundColor: isDark ? '#f472b6' : '#ec4899', // Pink 400 : Pink 500
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: theme.grid },
+                                    ticks: { color: theme.text }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { color: theme.text }
+                                }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+
+                // 5. Owner Comparison (Admin Only)
+                const ownerCtx = document.getElementById('ownerChart');
+                if (ownerCtx && data.ownerComparison && data.ownerComparison.length > 0) {
+                    if (charts.ownerComparison) charts.ownerComparison.destroy();
+                    charts.ownerComparison = new Chart(ownerCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.ownerComparison.map(d => d.owner_name || 'Unknown'),
+                            datasets: [{
+                                label: 'Revenue (₹)',
+                                data: data.ownerComparison.map(d => d.total_revenue),
+                                backgroundColor: isDark ? '#34d399' : '#10b981', // Emerald 400 : Emerald 500
+                                borderRadius: 4,
+                                indexAxis: 'y' // Horizontal bar
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    grid: { color: theme.grid },
+                                    ticks: { color: theme.text }
+                                },
+                                y: {
+                                    grid: { display: false },
+                                    ticks: { color: theme.text }
+                                }
+                            },
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+            }
+
+            // Init
+            initCharts();
+
+            // Watch for Dark Mode Changes
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'class') {
+                        initCharts(); // Re-render charts with new theme colors
+                    }
+                });
+            });
+            observer.observe(document.documentElement, { attributes: true });
+        });
+
+        async function updateRevenueChart(range) {
+            try {
+                const response = await fetch(`/dashboard/revenue-chart?range=${range}`);
+                const data = await response.json();
+
+                if (window.dashboardData && window.dashboardData.charts && window.dashboardData.charts.revenue) {
+                    const chart = window.dashboardData.charts.revenue;
+
+                    // Update Data
+                    chart.data.labels = data.revenue.map(d => {
+                        const date = new Date(d.date);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    });
+                    chart.data.datasets[0].data = data.revenue.map(d => d.total_revenue);
+
+                    chart.update();
+                }
+            } catch (error) {
+                console.error('Failed to update revenue chart:', error);
+            }
+        }
+    </script>
+
+    <%- include('partials/footer') %>

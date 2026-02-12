@@ -1,0 +1,160 @@
+<%- include('../partials/header') %>
+
+    <div class="-m-6 p-6 min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-800 dark:text-slate-200 font-sans">
+        <div class="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+            <div>
+                <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">System Activity Logs</h1>
+                <p class="text-[10px] text-slate-500 mt-2 font-black uppercase tracking-[0.2em]">Full Audit Trail &bull;
+                    Machine Governance Log</p>
+            </div>
+            <div
+                class="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-2 rounded-2xl shadow-sm">
+                <div class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse mx-2"></div>
+                <span
+                    class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest pr-2">Immutable
+                    Governance Active</span>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div
+            class="bg-white dark:bg-[#1e293b] p-6 rounded-[2rem] shadow-sm border border-slate-300 dark:border-slate-700/50 mb-10 overflow-hidden relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-transparent to-transparent"></div>
+            <form action="/logs" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end relative z-10">
+                <div class="space-y-1.5">
+                    <label
+                        class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Target
+                        Node</label>
+                    <input type="text" name="machine_id" value="<%= query.machine_id || '' %>" placeholder="Node ID"
+                        class="block w-full bg-slate-50 dark:bg-[#0f172a] border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white px-4 py-3 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all placeholder:text-slate-400">
+                </div>
+                <div class="space-y-1.5">
+                    <label
+                        class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Action
+                        Type</label>
+                    <select name="action_type"
+                        class="block w-full bg-slate-50 dark:bg-[#0f172a] border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white px-4 py-3 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all">
+                        <option value="">All Actions</option>
+                        <option value="payment_trigger" <%=query.action_type==='payment_trigger' ? 'selected' : '' %>
+                            >Payment Trigger</option>
+                        <option value="manual_trigger" <%=query.action_type==='manual_trigger' ? 'selected' : '' %>
+                            >Manual Trigger</option>
+                        <option value="test_run" <%=query.action_type==='test_run' ? 'selected' : '' %>>Test Run
+                        </option>
+                        <option value="gpio_toggle" <%=query.action_type==='gpio_toggle' ? 'selected' : '' %>>GPIO
+                            Toggle</option>
+                        <option value="emergency_stop" <%=query.action_type==='emergency_stop' ? 'selected' : '' %>
+                            >Emergency Stop</option>
+                    </select>
+                </div>
+                <div></div>
+                <button type="submit"
+                    class="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[10px] uppercase tracking-[0.2em] py-4 px-6 rounded-xl transition-all active:scale-95 shadow-xl hover:bg-indigo-600 dark:hover:bg-indigo-500 hover:text-white border border-transparent">
+                    Filter Logs
+                </button>
+            </form>
+        </div>
+
+        <!-- Table -->
+        <div
+            class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-slate-300 dark:border-slate-700/50 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr
+                            class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-300 dark:border-slate-700/50">
+                            <th class="px-6 py-4 font-black">Timestamp</th>
+                            <th class="px-6 py-4 font-black">Machine</th>
+                            <th class="px-6 py-4 font-black">Triggered By</th>
+                            <th class="px-6 py-4 font-black">Action</th>
+                            <th class="px-6 py-4 font-black">Description/Link</th>
+                            <th class="px-6 py-4 font-black text-center">Execution Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700/50 text-sm">
+                        <% logs.forEach(log=> { %>
+                            <tr
+                                class="hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-all border-b border-slate-300 dark:border-slate-800/50">
+                                <td class="px-6 py-5 text-slate-500 dark:text-slate-400 font-bold whitespace-nowrap">
+                                    <%= new Date(log.timestamp).toLocaleString() %>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="text-slate-900 dark:text-white font-black uppercase tracking-tight">
+                                        <%= log.Machine ? log.Machine.machine_name : 'N/A' %>
+                                    </div>
+                                    <div
+                                        class="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mt-0.5">
+                                        <%= log.machine_id %>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <span
+                                        class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-[10px] uppercase tracking-widest border border-slate-200 dark:border-slate-700">
+                                        <%= log.triggered_by %>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <span class="text-[10px] font-black uppercase tracking-widest" :class="{
+                                    'text-indigo-500': '<%= log.action_type %>' === 'payment_trigger',
+                                    'text-emerald-500': '<%= log.action_type %>' === 'manual_trigger',
+                                    'text-red-500': '<%= log.action_type %>' === 'emergency_stop'
+                                }">
+                                        <%= log.action_type.replace('_', ' ' ) %>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="text-slate-600 dark:text-slate-400 font-medium max-w-md truncate">
+                                        <%= log.description %>
+                                    </div>
+                                    <% if(log.transaction_id) { %>
+                                        <div
+                                            class="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 mt-1 select-all">
+                                            Payment Ref: <%= log.transaction_id %>
+                                        </div>
+                                        <% } %>
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <span
+                                        class="inline-flex items-center px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border <%= log.status === 'success' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 dark:text-red-400 border-red-500/20' %>">
+                                        <%= log.status %>
+                                    </span>
+                                </td>
+                            </tr>
+                            <% }); %>
+                                <% if(logs.length===0) { %>
+                                    <tr>
+                                        <td colspan="6" class="p-8 text-center text-slate-500">No activity logs found.
+                                        </td>
+                                    </tr>
+                                    <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if(totalPages> 1) { %>
+                <div
+                    class="px-6 py-4 border-t border-slate-300 dark:border-slate-700/50 flex items-center justify-between bg-slate-50 dark:bg-slate-800/20">
+                    <div class="text-sm text-slate-500 dark:text-slate-400">
+                        Page <span class="font-bold text-slate-900 dark:text-white">
+                            <%= currentPage %>
+                        </span> of <span class="font-bold text-slate-900 dark:text-white">
+                            <%= totalPages %>
+                        </span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <% if(currentPage> 1) { %>
+                            <a href="/logs?<%= new URLSearchParams({...query, page: currentPage - 1}).toString() %>"
+                                class="px-3 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm font-bold rounded transition-colors shadow-sm">Previous</a>
+                            <% } %>
+                                <% if(currentPage < totalPages) { %>
+                                    <a href="/logs?<%= new URLSearchParams({...query, page: currentPage + 1}).toString() %>"
+                                        class="px-3 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm font-bold rounded transition-colors shadow-sm">Next</a>
+                                    <% } %>
+                    </div>
+                </div>
+                <% } %>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
