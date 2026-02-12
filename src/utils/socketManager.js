@@ -64,7 +64,44 @@ function init(server) {
             }
         });
 
-        // ... handlers ...
+        // --- CRITICAL HANDLERS RESTORED ---
+
+        // 1. Logs from Machine -> Browser
+        socket.on('machine_log', (data) => {
+            if (socket.machine_id) {
+                // Ensure it's valid JSON if string
+                let payload = data;
+                if (typeof data === 'string') {
+                    try { payload = JSON.parse(data); } catch (e) { }
+                }
+                // Broadcast to Web Clients in room
+                io.to(`machine_${socket.machine_id}`).emit('machine_log', payload);
+            }
+        });
+
+        // 2. Heartbeat (Status/GPIOs) from Machine -> Browser
+        socket.on('heartbeat', async (data) => {
+            if (socket.machine_id) {
+                let payload = data;
+                if (typeof data === 'string') {
+                    try { payload = JSON.parse(data); } catch (e) { }
+                }
+
+                // Update DB Timestamp (Throttle saves if needed, or just every time)
+                // For performance, maybe throttle this? But let's keep it simple for now.
+                // Actually, let's NOT await DB here to avoid blocking the event loop on high-freq heartbeats.
+                // Just update memory or do fire-and-forget DB update.
+                Machine.update({ last_heartbeat: new Date() }, { where: { machine_id: socket.machine_id } }).catch(() => { });
+
+                // Broadcast State to Web Clients
+                io.to(`machine_${socket.machine_id}`).emit('machine_update', {
+                    machine_id: socket.machine_id,
+                    last_heartbeat: new Date(),
+                    is_connected: true,
+                    ...payload // Spread states, network, sequence status
+                });
+            }
+        });
 
         socket.on('disconnect', async (reason) => {
             console.error(`[SOCKET] ❌ Disconnected: ${socket.id}, Reason: ${reason}`);
