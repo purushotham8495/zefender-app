@@ -1,527 +1,447 @@
-                /**
-                * Zefender Machine Control Firmware (ESP32 Wrover Compatible)
-                * 
-                * Features:
-                * - Socket.IO Real-time Link
-                * - Remote GPIO Control/*
-                Robust ESP32 + Socket.IO (WebSocket) vending/automation driver
-                - Non-blocking sanitization state machine with Dynamic Steps
-                - Socket.IO for real-time control and heartbeat
-                - WiFi event handling + auto-reconnect
-                - Standard WebServer for OTA (Resolves Compilation Issues)
-                */
+/**
+* Zefender Machine Control Firmware (ESP32 Wrover Compatible)
+* PROD VERSION 1.0 - Optimized for Hostinger Deployment
+*
+* Features:
+* - Reliable WebSocket Connection (Bypasses Shared Hosting Limitations)
+* - 3-Minute Connection Watchdog (Auto-Reboot)
+* - 24-Hour Scheduled Maintenance (Auto-Reboot)
+* - WiFi Auto-Reconnect
+* - Over-The-Air (OTA) Updates
+* - Dynamic Sequence Engine
+*/
 
-                #include <WiFi.h>
-                #include <SocketIoClient.h> // Requires "SocketIoClient" library by timum-viw
-                #include <ArduinoJson.h>    // Requires ArduinoJson v6+
-                #include <WebServer.h>      // Standard ESP32 WebServer
-                #include <Update.h>
-                #include <HTTPClient.h>
-                #include <HTTPUpdate.h>
-                #include <vector>
-                #include <esp_wifi.h>
+#include <WiFi.h>
+#include <SocketIoClient.h> 
+#include <ArduinoJson.h>    
+#include <WebServer.h>      
+#include <Update.h>
+#include <HTTPClient.h>
+#include <HTTPUpdate.h>
+#include <vector>
+#include <esp_wifi.h>
 
-                // ====================== CONFIG (change as required) ======================
-                #define WIFI_SSID       "SPK"
-                #define WIFI_PASSWORD   "Spk@0209"
+// ====================== CONFIGURATION ======================
+#define WIFI_SSID       "SPK"
+#define WIFI_PASSWORD   "Spk@0209"
 
-                // REPLACE WITH YOUR SERVER URL (e.g. http://192.168.1.100:3000 or ngrok url)
-                // REPLACE WITH YOUR SERVER URL (e.g. http://192.168.1.100:3000 or ngrok url)
-                char host[] = "antiquewhite-quetzal-291895.hostingersite.com"; 
-                int port = 80;
-                char path[] = "/socket.io/"; 
+// Server Connection
+char host[] = "mintcream-marten-438766.hostingersite.com"; 
+int port = 80;
+char path[] = "/socket.io/?transport=websocket"; // Force WebSocket for stability
 
-                #define MACHINE_ID      "RNSIT_01"
+#define MACHINE_ID      "RNSIT_01"
+#define OTA_PASS        "Healthmet@123"
 
-                // OTA password
-                #define OTA_PASS        "Healthmet@123"
+// Pin Definitions
+#define PIN_PUMP      4
+#define PIN_HEATER    5
+#define PIN_FAN       18
+#define PIN_UV        19
+#define BUZZER_PIN    23 
 
-                // Default Relay pins
-                #define PIN_PUMP      4
-                #define PIN_HEATER    5
-                #define PIN_FAN       18
-                #define PIN_UV        19
+// Timing Constants
+const unsigned long HEARTBEAT_INTERVAL = 5000;
+const unsigned long WATCHDOG_TIMEOUT = 180000;      // 3 Minutes
+const unsigned long DAILY_REBOOT_INTERVAL = 86400000; // 24 Hours
 
-                // Buzzer relay pin
-                #define BUZZER_PIN    23 
+// Global State
+bool isRunningSequence = false;
+unsigned long lastHeartbeat = 0;
+bool isSocketConnected = false;
+unsigned long lastConnectionTime = 0;
 
-                // State tracking
-                bool isRunningSequence = false;
-                unsigned long lastHeartbeat = 0;
-                const unsigned long HEARTBEAT_INTERVAL = 5000;
+SocketIoClient socket;
+WebServer server(80);
 
-                SocketIoClient socket;
-                WebServer server(80); // Standard WebServer
+// ====================== HELPER FUNCTIONS ======================
 
-                // ====================== LOGGING HELPER ======================
-                void logPrint(const String &msg) {
-                    Serial.println(msg);
-                    
-                    // Remote Logging Bridge
-                    DynamicJsonDocument doc(512);
-                    doc["message"] = msg;
-                    doc["timestamp"] = millis();
-                    String output;
-                    serializeJson(doc, output);
-                    socket.emit("machine_log", output.c_str());
-                }
+// Log to Serial and Remote Server
+void logPrint(const String &msg) {
+    Serial.println(msg);
+    if (isSocketConnected) {
+        DynamicJsonDocument doc(512);
+        doc["message"] = msg;
+        doc["timestamp"] = millis();
+        String output;
+        serializeJson(doc, output);
+        socket.emit("machine_log", output.c_str());
+    }
+}
 
-                // ====================== PIN POLARITY ENGINE ======================
-                struct PinConfig {
-                    int pin;
-                    bool isActiveLow;
-                };
-                std::vector<PinConfig> pinConfigs;
+// Pin Polarity Management
+struct PinConfig {
+    int pin;
+    bool isActiveLow;
+};
+std::vector<PinConfig> pinConfigs;
 
-                // Default configuration (Initial)
-                void initDefaultPins() {
-                    pinConfigs.clear();
-                    int defaults[] = {4, 5, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33};
-                    for(int p : defaults) {
-                        pinConfigs.push_back({p, true}); // Assume Active Low (most relays) by default
-                    }
-                }
+void initDefaultPins() {
+    pinConfigs.clear();
+    int defaults[] = {4, 5, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33};
+    for(int p : defaults) {
+        pinConfigs.push_back({p, true}); // Default Active Low
+    }
+}
 
-                bool pinIsActiveLow(int pin) {
-                    for(const auto& c : pinConfigs) {
-                        if(c.pin == pin) return c.isActiveLow;
-                    }
-                    return true; // Default
-                }
+bool pinIsActiveLow(int pin) {
+    for(const auto& c : pinConfigs) {
+        if(c.pin == pin) return c.isActiveLow;
+    }
+    return true; 
+}
 
-                // ====================== RELAY HELPERS ======================
-                void relayOn(int pin)  { 
-                    if (pin > 0) {
-                        bool isLow = pinIsActiveLow(pin);
-                        pinMode(pin, OUTPUT); 
-                        digitalWrite(pin, isLow ? LOW : HIGH); 
-                        logPrint("📍 Pin " + String(pin) + " ON (" + (isLow ? "LOW" : "HIGH") + ")");
-                    }
-                }
+void relayOn(int pin)  { 
+    if (pin > 0) {
+        bool isLow = pinIsActiveLow(pin);
+        pinMode(pin, OUTPUT); 
+        digitalWrite(pin, isLow ? LOW : HIGH); 
+        logPrint("📍 Pin " + String(pin) + " ON");
+    }
+}
 
-                void relayOff(int pin) { 
-                    if (pin > 0) {
-                        bool isLow = pinIsActiveLow(pin);
-                        pinMode(pin, OUTPUT);
-                        digitalWrite(pin, isLow ? HIGH : LOW); 
-                        logPrint("📍 Pin " + String(pin) + " OFF (" + (isLow ? "HIGH" : "LOW") + ")");
-                    }
-                }
+void relayOff(int pin) { 
+    if (pin > 0) {
+        bool isLow = pinIsActiveLow(pin);
+        pinMode(pin, OUTPUT);
+        digitalWrite(pin, isLow ? HIGH : LOW); 
+        logPrint("📍 Pin " + String(pin) + " OFF");
+    }
+}
 
-                // Buzzer helpers
-                void buzzerOn()  { relayOn(BUZZER_PIN); }
-                void buzzerOff() { relayOff(BUZZER_PIN); }
+void buzzerOn()  { relayOn(BUZZER_PIN); }
+void buzzerOff() { relayOff(BUZZER_PIN); }
 
-                void playMelodyBlocking(const int durations[], int length) {
-                // Simple beep loop
-                for (int i = 0; i < length; i++) {
-                    int beepDuration = 3000 / durations[i];
-                    buzzerOn();
-                    delay(beepDuration);
-                    buzzerOff();
-                    delay(beepDuration * 0.3);
-                }
-                }
+void playMelodyBlocking(const int durations[], int length) {
+    for (int i = 0; i < length; i++) {
+        int beepDuration = 3000 / durations[i];
+        buzzerOn();
+        delay(beepDuration);
+        buzzerOff();
+        delay(beepDuration * 0.3);
+    }
+}
 
-                // ====================== DYNAMIC GENERATOR ENGINE ======================
-                enum StepAction { ACTION_ON, ACTION_OFF, ACTION_WAIT };
+// ====================== SEQUENCE ENGINE ======================
+enum StepAction { ACTION_ON, ACTION_OFF, ACTION_WAIT };
 
-                struct SequenceStep {
-                int stepIndex;
-                int pin;
-                StepAction action;
-                unsigned long duration; // ms
-                String description;
-                };
+struct SequenceStep {
+    int stepIndex;
+    int pin;
+    StepAction action;
+    unsigned long duration;
+    String description;
+};
 
-                class SequenceEngine {
-                public:
-                SequenceEngine() : running(false), stepIndex(0), stepStart(0) {}
+class SequenceEngine {
+public:
+    SequenceEngine() : running(false), stepIndex(0), stepStart(0) {}
 
-                void loadSequence(const JsonArray& stepsJson) {
-                    steps.clear();
-                    logPrint("🔄 Loading new sequence with " + String(stepsJson.size()) + " steps.");
-                    
-                    for (JsonObject s : stepsJson) {
-                    SequenceStep step;
-                    step.stepIndex = s["step_index"] | 0;
-                    step.pin = s["pin_number"] | -1;
-                    step.duration = s["duration_ms"] | 0;
-                    step.description = s["description"] | "";
-                    
-                    String act = s["action"] | "WAIT";
-                    if (act == "ON") step.action = ACTION_ON;
-                    else if (act == "OFF") step.action = ACTION_OFF;
-                    else step.action = ACTION_WAIT;
-                    
-                    steps.push_back(step);
-                    }
-                }
+    void loadSequence(const JsonArray& stepsJson) {
+        steps.clear();
+        logPrint("🔄 Loading new sequence");
+        for (JsonObject s : stepsJson) {
+            SequenceStep step;
+            step.stepIndex = s["step_index"] | 0;
+            step.pin = s["pin_number"] | -1;
+            step.duration = s["duration_ms"] | 0;
+            step.description = s["description"] | "";
+            String act = s["action"] | "WAIT";
+            if (act == "ON") step.action = ACTION_ON;
+            else if (act == "OFF") step.action = ACTION_OFF;
+            else step.action = ACTION_WAIT;
+            steps.push_back(step);
+        }
+    }
 
-                void start() {
-                    if (steps.empty()) {
-                    logPrint("⚠ No sequence loaded!");
-                    return;
-                    }
-                    if (running) return;
-                    
-                    running = true;
-                    isRunningSequence = true;
-                    stepIndex = 0;
-                    stepStart = millis();
-                    logPrint("🚀 Starting Sequence");
-                    playMelodyBlocking((const int[]){4,8,4}, 3); // Start sound
-                    
-                    executeStep(steps[stepIndex]);
-                }
+    void start() {
+        if (steps.empty() || running) return;
+        running = true;
+        isRunningSequence = true;
+        stepIndex = 0;
+        stepStart = millis();
+        logPrint("🚀 Starting Sequence");
+        playMelodyBlocking((const int[]){4,8,4}, 3); 
+        executeStep(steps[stepIndex]);
+    }
 
-                void stop() {
-                    running = false;
-                    isRunningSequence = false;
-                    
-                    // Safety: Turn off all known pins in sequence
-                    for(const auto& s : steps) {
-                    if(s.pin > 0) relayOff(s.pin);
-                    }
-                    logPrint("🛑 Sequence Stopped/Finished");
-                    
-                    // Notify Server
-                    socket.emit("sequence_complete", "{}");
-                }
+    void stop() {
+        running = false;
+        isRunningSequence = false;
+        for(const auto& s : steps) {
+            if(s.pin > 0) relayOff(s.pin);
+        }
+        logPrint("🛑 Sequence Stopped");
+        if (isSocketConnected) socket.emit("sequence_complete", "{}");
+    }
 
-                void update() {
-                    if (!running) return;
+    void update() {
+        if (!running) return;
+        if (stepIndex >= steps.size()) {
+            stop();
+            playMelodyBlocking((const int[]){4,4,4,4}, 4); 
+            return;
+        }
+        if (millis() - stepStart >= steps[stepIndex].duration) {
+            stepIndex++;
+            if (stepIndex < steps.size()) {
+                stepStart = millis();
+                executeStep(steps[stepIndex]);
+            }
+        }
+    }
+    
+    bool isBusy() { return running; }
 
-                    if (stepIndex >= steps.size()) {
-                    stop();
-                    playMelodyBlocking((const int[]){4,4,4,4}, 4); // End sound
-                    return;
-                    }
+private:
+    std::vector<SequenceStep> steps;
+    bool running;
+    size_t stepIndex;
+    unsigned long stepStart;
 
-                    if (millis() - stepStart >= steps[stepIndex].duration) {
-                    stepIndex++;
-                    if (stepIndex < steps.size()) {
-                        stepStart = millis();
-                        executeStep(steps[stepIndex]);
-                    }
-                    }
-                }
-                
-                bool isBusy() { return running; }
+    void executeStep(const SequenceStep& s) {
+        logPrint("👉 Step " + String(s.stepIndex) + ": " + s.description);
+        if (s.pin > 0) {
+            if (s.action == ACTION_ON) relayOn(s.pin);
+            else if (s.action == ACTION_OFF) relayOff(s.pin);
+        }
+    }
+};
 
-                private:
-                std::vector<SequenceStep> steps;
-                bool running;
-                size_t stepIndex;
-                unsigned long stepStart;
+SequenceEngine engine;
 
-                void executeStep(const SequenceStep& s) {
-                    logPrint("👉 Step " + String(s.stepIndex) + ": " + s.description);
-                    if (s.pin > 0) {
-                    if (s.action == ACTION_ON) relayOn(s.pin);
-                    else if (s.action == ACTION_OFF) relayOff(s.pin);
-                    }
-                }
-                };
+// ====================== SOCKET HANDLERS ======================
 
-                SequenceEngine engine;
+void onConfig(const char * payload, size_t length) {
+    logPrint("📩 Config Received");
+    DynamicJsonDocument doc(2048);
+    deserializeJson(doc, payload);
 
-                // ====================== SOCKET.IO HANDLERS ======================
+    if (doc.containsKey("gpios")) {
+        pinConfigs.clear();
+        JsonArray gpios = doc["gpios"].as<JsonArray>();
+        for (JsonObject g : gpios) {
+            int pin = g["pin_number"];
+            bool isLow = g["is_active_low"] | false;
+            pinConfigs.push_back({pin, isLow});
+            pinMode(pin, OUTPUT);
+            relayOff(pin); 
+        }
+        logPrint("✅ Pins Reconfigured");
+    }
+}
 
-                void onConfig(const char * payload, size_t length) {
-                    logPrint("📩 Received GPIO Configuration");
-                    DynamicJsonDocument doc(2048);
-                    DeserializationError error = deserializeJson(doc, payload);
-                    if (error) {
-                        logPrint("❌ Config JSON Error: " + String(error.c_str()));
-                        return;
-                    }
+void onConnect(const char * payload, size_t length) {
+    logPrint("✅ CONNECTED TO SERVER");
+    isSocketConnected = true;
+    String regJson = "{\"machine_id\":\"" + String(MACHINE_ID) + "\"}";
+    socket.emit("register", regJson.c_str());
+}
 
-                    if (doc.containsKey("gpios")) {
-                        pinConfigs.clear();
-                        JsonArray gpios = doc["gpios"].as<JsonArray>();
-                        for (JsonObject g : gpios) {
-                            int pin = g["pin_number"];
-                            bool isLow = g["is_active_low"] | false;
-                            
-                            pinConfigs.push_back({pin, isLow});
-                            pinMode(pin, OUTPUT);
-                            relayOff(pin); // Reset to default OFF state on reconfig
-                            logPrint("📍 Configured Pin " + String(pin) + " (ActiveLow: " + String(isLow) + ")");
-                        }
-                    }
-                }
+void onDisconnect(const char * payload, size_t length) {
+    logPrint("⚠ DISCONNECTED");
+    isSocketConnected = false;
+}
 
-                void onConnect(const char * payload, size_t length) {
-                logPrint("✅ Connected to Socket Server");
-                // Register Machine
-                String regJson = "{\"machine_id\":\"" + String(MACHINE_ID) + "\"}";
-                socket.emit("register", regJson.c_str());
-                }
+void onRunSequence(const char * payload, size_t length) {
+    logPrint("📩 RUN SEQUENCE");
+    DynamicJsonDocument doc(4096);
+    if (!deserializeJson(doc, payload) && doc.containsKey("steps")) {
+        engine.loadSequence(doc["steps"].as<JsonArray>());
+        engine.start();
+    }
+}
 
-                void onDisconnect(const char * payload, size_t length) {
-                logPrint("⚠ Disconnected from Socket Server");
-                }
+// Pulse Engine
+struct PulsingPin { int pin; unsigned long endTime; };
+std::vector<PulsingPin> activePulses;
 
-                void onRunSequence(const char * payload, size_t length) {
-                logPrint("📩 Command: Run Sequence");
-                
-                DynamicJsonDocument doc(4096);
-                DeserializationError error = deserializeJson(doc, payload); // payload is { "steps": [...] }
-                
-                if (error) {
-                    logPrint("❌ JSON Error: " + String(error.c_str()));
-                    return;
-                }
+void updatePulses() {
+    for (int i = activePulses.size() - 1; i >= 0; i--) {
+        if (millis() >= activePulses[i].endTime) {
+            relayOff(activePulses[i].pin);
+            activePulses.erase(activePulses.begin() + i);
+        }
+    }
+}
 
-                if (doc.containsKey("steps")) {
-                    engine.loadSequence(doc["steps"].as<JsonArray>());
-                    engine.start();
-                }
-                }
+void onPulseGPIO(const char * payload, size_t length) {
+    DynamicJsonDocument doc(256);
+    deserializeJson(doc, payload);
+    int pin = doc["pin"];
+    int duration = doc["duration"] | 5000;
+    if (pin > 0) {
+        relayOn(pin);
+        for (int i = 0; i < activePulses.size(); i++) {
+            if (activePulses[i].pin == pin) {
+                activePulses.erase(activePulses.begin() + i);
+                break;
+            }
+        }
+        activePulses.push_back({ pin, millis() + duration });
+    }
+}
 
-                // ====================== PULSE ENGINE ======================
-                struct PulsingPin {
-                    int pin;
-                    unsigned long endTime;
-                };
-                std::vector<PulsingPin> activePulses;
+void onToggleGPIO(const char * payload, size_t length) {
+    DynamicJsonDocument doc(256);
+    deserializeJson(doc, payload);
+    if (doc.containsKey("action")) {
+        String act = doc["action"];
+        if (act == "ALL_ON") for(const auto& c : pinConfigs) relayOn(c.pin);
+        else if (act == "ALL_OFF") for(const auto& c : pinConfigs) relayOff(c.pin);
+        return;
+    }
+    int pin = doc["pin"];
+    if (pin > 0) {
+        pinMode(pin, OUTPUT); 
+        int val = digitalRead(pin);
+        digitalWrite(pin, (val == HIGH) ? LOW : HIGH);
+        logPrint("🔌 Toggled Pin " + String(pin));
+        lastHeartbeat = millis(); 
+    }
+}
 
-                void updatePulses() {
-                    for (int i = activePulses.size() - 1; i >= 0; i--) {
-                        if (millis() >= activePulses[i].endTime) {
-                            relayOff(activePulses[i].pin);
-                            activePulses.erase(activePulses.begin() + i);
-                        }
-                    }
-                }
+void onEmergencyStop(const char * payload, size_t length) {
+    logPrint("🚨 EMERGENCY STOP");
+    engine.stop();
+    activePulses.clear();
+    for(const auto& c : pinConfigs) relayOff(c.pin);
+}
 
-                void onPulseGPIO(const char * payload, size_t length) {
-                    // payload: { "pin": 4, "duration": 5000 }
-                    DynamicJsonDocument doc(256);
-                    deserializeJson(doc, payload);
-                    int pin = doc["pin"];
-                    int duration = doc["duration"] | 5000;
+void onReconnectWifi(const char * payload, size_t length) {
+    logPrint("🔄 Remote WiFi Reconnect Command");
+    ESP.restart();
+}
 
-                    if (pin > 0) {
-                        relayOn(pin);
-                        
-                        // Remove existing pulse for this pin if any
-                        for (int i = 0; i < activePulses.size(); i++) {
-                            if (activePulses[i].pin == pin) {
-                                activePulses.erase(activePulses.begin() + i);
-                                break;
-                            }
-                        }
-                        
-                        PulsingPin p = { pin, millis() + duration };
-                        activePulses.push_back(p);
-                    }
-                }
+void onOTAUpdate(const char * payload, size_t length) {
+    logPrint("📩 OTA Update Request");
+    DynamicJsonDocument doc(512);
+    deserializeJson(doc, payload);
+    if (doc.containsKey("url")) {
+        String url = doc["url"];
+        WiFiClient client;
+        t_httpUpdate_return ret = httpUpdate.update(client, url);
+        if (ret == HTTP_UPDATE_OK) logPrint("✅ OTA Success! Restarting...");
+        else logPrint("❌ OTA Failed");
+    }
+}
 
-                void onToggleGPIO(const char * payload, size_t length) {
-                    // payload: { "pin": 4 } OR { "action": "ALL_ON" }
-                    DynamicJsonDocument doc(256);
-                    deserializeJson(doc, payload);
-                    
-                    if (doc.containsKey("action")) {
-                        String act = doc["action"];
-                        if (act == "ALL_ON") {
-                            for(const auto& c : pinConfigs) relayOn(c.pin);
-                            logPrint("⚡ ALL PINS ON");
-                        } else if (act == "ALL_OFF") {
-                            for(const auto& c : pinConfigs) relayOff(c.pin);
-                            logPrint("🌑 ALL PINS OFF");
-                        }
-                        return;
-                    }
+// ====================== OTA WEB HANDLERS ======================
+const char* otaHTML = "<form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>";
 
-                    int pin = doc["pin"];
-                    if (pin > 0) {
-                        pinMode(pin, OUTPUT); 
-                        int val = digitalRead(pin);
-                        if (val == HIGH) digitalWrite(pin, LOW);
-                        else digitalWrite(pin, HIGH);
-                        
-                        logPrint("🔌 Toggled Pin " + String(pin));
-                        lastHeartbeat = 0; 
-                    }
-                }
+void handleRoot() { server.send(200, "text/plain", "Machine Online"); }
+void handleUpdateGet() {
+    if (!server.authenticate("admin", OTA_PASS)) return server.requestAuthentication();
+    server.send(200, "text/html", otaHTML);
+}
+void handleUpdatePost() {
+    if (!server.authenticate("admin", OTA_PASS)) return server.requestAuthentication();
+    server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
+    ESP.restart();
+}
+void handleUpdateUpload() {
+    if (!server.authenticate("admin", OTA_PASS)) return;
+    HTTPUpload& upload = server.upload();
+    if (upload.status == UPLOAD_FILE_START) Update.begin(UPDATE_SIZE_UNKNOWN);
+    else if (upload.status == UPLOAD_FILE_WRITE) Update.write(upload.buf, upload.currentSize);
+    else if (upload.status == UPLOAD_FILE_END) Update.end(true);
+}
 
-                void onEmergencyStop(const char * payload, size_t length) {
-                    logPrint("🚨 EMERGENCY STOP RECEIVED");
-                    engine.stop();
-                    activePulses.clear(); // Clear all pulses
-                    for(const auto& c : pinConfigs) relayOff(c.pin);
-                }
+// ====================== MAIN SETUP & LOOP ======================
 
-                void onReconnectWifi(const char * payload, size_t length) {
-                    logPrint("🔄 Remote WiFi Reconnect requested");
-                    ESP.restart();
-                }
+void setup() {
+    Serial.begin(115200);
+    initDefaultPins();
 
-                void onOTAUpdate(const char * payload, size_t length) {
-                    logPrint("📩 Centralized OTA Request Received");
-                    DynamicJsonDocument doc(512);
-                    DeserializationError err = deserializeJson(doc, payload);
-                    if (err) {
-                        logPrint("❌ OTA JSON Error: " + String(err.c_str()));
-                        return;
-                    }
-                    
-                    if (doc.containsKey("url")) {
-                        String url = doc["url"];
-                        logPrint("🌐 Fetching Firmware from: " + url);
-                        
-                        // Start Update
-                        WiFiClient client;
-                        
-                        // Set longer timeout for OTA
-                        // client.setTimeout(120); 
+    pinMode(BUZZER_PIN, OUTPUT);
+    relayOff(BUZZER_PIN);
+    for(const auto& c : pinConfigs) {
+        pinMode(c.pin, OUTPUT);
+        relayOff(c.pin);
+    }
 
-                        t_httpUpdate_return ret = httpUpdate.update(client, url);
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    Serial.print("Connecting to WiFi");
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("\n✅ WiFi Connected: " + WiFi.localIP().toString());
 
-                        switch (ret) {
-                            case HTTP_UPDATE_FAILED:
-                                logPrint("❌ OTA Update Failed. Error (" + String(httpUpdate.getLastError()) + "): " + httpUpdate.getLastErrorString());
-                                break;
-                            case HTTP_UPDATE_NO_UPDATES:
-                                logPrint("ℹ OTA No Updates");
-                                break;
-                            case HTTP_UPDATE_OK:
-                                logPrint("✅ OTA Update Success! Restarting...");
-                                break;
-                        }
-                    }
-                }
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("config", onConfig);
+    socket.on("run_sequence", onRunSequence);
+    socket.on("toggle_gpio", onToggleGPIO);
+    socket.on("pulse_gpio", onPulseGPIO);
+    socket.on("emergency_stop", onEmergencyStop);
+    socket.on("reconnect_wifi", onReconnectWifi);
+    socket.on("ota_update", onOTAUpdate);
 
-                // ====================== OTA HANDLERS ======================
-                // ... (rest of OTA code same as before) ...
-                const char* otaHTML = 
-                "<form method='POST' action='/update' enctype='multipart/form-data'>"
-                "<input type='file' name='update'>"
-                "<input type='submit' value='Update'>"
-                "</form>";
+    socket.begin(host, port, path);
+    lastHeartbeat = millis(); // Prevent boot spam
+    
+    server.on("/", HTTP_GET, handleRoot);
+    server.on("/update", HTTP_GET, handleUpdateGet);
+    server.on("/update", HTTP_POST, handleUpdatePost, handleUpdateUpload);
+    server.begin();
+}
 
-                void handleRoot() {
-                    server.send(200, "text/plain", "ESP32 Controller Online");
-                }
+void loop() {
+    // 1. WiFi Auto-Recovery
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("⚠ WiFi Lost! Reconnecting...");
+        WiFi.disconnect(); 
+        WiFi.reconnect();
+        unsigned long start = millis();
+        while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) delay(100);
+        if (WiFi.status() == WL_CONNECTED) Serial.println("✅ WiFi Restored");
+    }
 
-                void handleUpdateGet() {
-                    if (!server.authenticate("admin", OTA_PASS)) {
-                        return server.requestAuthentication();
-                    }
-                    server.send(200, "text/html", otaHTML);
-                }
+    // 2. Service Loops
+    socket.loop();
+    server.handleClient();
+    engine.update();
+    updatePulses();
 
-                void handleUpdatePost() {
-                    if (!server.authenticate("admin", OTA_PASS)) {
-                        return server.requestAuthentication();
-                    }
-                    server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
-                    ESP.restart();
-                }
+    // 3. Connection Watchdog (3 Minutes)
+    if (isSocketConnected) {
+        lastConnectionTime = millis();
+    } else if (millis() - lastConnectionTime > WATCHDOG_TIMEOUT) {
+        Serial.println("💀 Watchdog: Offline > 3min. Rebooting...");
+        delay(1000);
+        ESP.restart();
+    }
 
-                void handleUpdateUpload() {
-                    if (!server.authenticate("admin", OTA_PASS)) return;
-                    
-                    HTTPUpload& upload = server.upload();
-                    if (upload.status == UPLOAD_FILE_START) {
-                        logPrint("Update: " + upload.filename);
-                        if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
-                            Update.printError(Serial);
-                        }
-                    } else if (upload.status == UPLOAD_FILE_WRITE) {
-                        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-                            Update.printError(Serial);
-                        }
-                    } else if (upload.status == UPLOAD_FILE_END) {
-                        if (Update.end(true)) {
-                            logPrint("Update Success: " + String(upload.totalSize));
-                        } else {
-                            Update.printError(Serial);
-                        }
-                    }
-                }
+    // 4. Daily Maintenance Reboot (24 Hours)
+    if (millis() > DAILY_REBOOT_INTERVAL && !engine.isBusy()) {
+        Serial.println("✨ Daily Maintenance Reboot");
+        delay(1000);
+        ESP.restart();
+    }
 
-                // ====================== SETUP / LOOP ======================
+    // 5. Heartbeat
+    if (isSocketConnected && (millis() - lastHeartbeat > HEARTBEAT_INTERVAL)) {
+        lastHeartbeat = millis();
+        DynamicJsonDocument doc(2048);
+        doc["is_running_sequence"] = engine.isBusy();
+        
+        JsonObject states = doc.createNestedObject("states");
+        for(const auto& c : pinConfigs) {
+             bool rawVal = digitalRead(c.pin);
+             states[String(c.pin)] = c.isActiveLow ? (rawVal == LOW) : (rawVal == HIGH);
+        }
+        
+        JsonObject net = doc.createNestedObject("network");
+        net["ssid"] = WiFi.SSID();
+        net["rssi"] = WiFi.RSSI();
+        net["ip"] = WiFi.localIP().toString();
 
-                void setup() {
-                    Serial.begin(115200);
-                    
-                    // Init default pins first
-                    initDefaultPins();
-
-                    // Init Pins
-                    pinMode(BUZZER_PIN, OUTPUT);
-                    relayOff(BUZZER_PIN);
-                    
-                    for(const auto& c : pinConfigs) {
-                        pinMode(c.pin, OUTPUT);
-                        relayOff(c.pin);
-                    }
-
-                    // WiFi
-                    WiFi.mode(WIFI_STA);
-                    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-                    Serial.print("Connecting to WiFi");
-                    while (WiFi.status() != WL_CONNECTED) {
-                        delay(500);
-                        Serial.print(".");
-                    }
-                    Serial.println("\nWiFi Connected. IP: " + WiFi.localIP().toString());
-
-                    // Socket.IO Events
-                    socket.on("connect", onConnect);
-                    socket.on("disconnect", onDisconnect);
-                    socket.on("config", onConfig);
-                    socket.on("run_sequence", onRunSequence);
-                    socket.on("toggle_gpio", onToggleGPIO);
-                    socket.on("pulse_gpio", onPulseGPIO); // New Handler
-                    socket.on("emergency_stop", onEmergencyStop);
-                    socket.on("reconnect_wifi", onReconnectWifi);
-                    socket.on("ota_update", onOTAUpdate);
-
-                    // Start Socket
-                    // Note: Library expects (host, port, path)
-                    socket.begin(host, port, path);
-
-                    // OTA Server (Standard)
-                    server.on("/", HTTP_GET, handleRoot);
-                    server.on("/update", HTTP_GET, handleUpdateGet);
-                    server.on("/update", HTTP_POST, handleUpdatePost, handleUpdateUpload);
-                    server.begin();
-                }
-
-                void loop() {
-                    socket.loop();
-                    server.handleClient();
-                    engine.update();
-                    updatePulses(); // Check pulse timers
-
-                    // Heartbeat
-                    if (millis() - lastHeartbeat > HEARTBEAT_INTERVAL) {
-                        lastHeartbeat = millis();
-                        
-                        DynamicJsonDocument doc(2048);
-                        doc["is_running_sequence"] = engine.isBusy();
-                        
-                        JsonObject states = doc.createNestedObject("states");
-                        for(const auto& c : pinConfigs) {
-                            // Determine Active status based on polarity
-                            bool rawVal = digitalRead(c.pin);
-                            bool isActive = c.isActiveLow ? (rawVal == LOW) : (rawVal == HIGH);
-                            states[String(c.pin)] = isActive;
-                        }
-
-                        JsonObject net = doc.createNestedObject("network");
-                        net["ssid"] = WiFi.SSID();
-                        net["rssi"] = WiFi.RSSI();
-                        net["ip"] = WiFi.localIP().toString();
-                        
-                        String output;
-                        serializeJson(doc, output);
-                        socket.emit("heartbeat", output.c_str());
-                    }
-                }
-                
+        String output;
+        serializeJson(doc, output);
+        socket.emit("heartbeat", output.c_str());
+    }
+    
+    delay(10); 
+}
