@@ -6,12 +6,12 @@ let io;
 const connectedMachines = new Map(); // machine_id -> socket_id
 
 function init(server) {
-    console.log('🚀 INITIALIZING V2 SOCKET MANAGER (10 PIN SUPPORT)');
-    io = socketIo(server, {
+    console.log('🚀 INITIALIZING V4 SOCKET MANAGER');
+    io = new socketIo.Server(server, {
         allowEIO3: true,
-        pingTimeout: 20000, // Reduced from 60s
-        pingInterval: 10000, // Reduced from 25s to keep Nginx/Hostinger proxy alive
-        transports: ['websocket', 'polling'], // Critical for Hostinger/Nginx
+        pingTimeout: 20000,
+        pingInterval: 10000,
+        transports: ['websocket', 'polling'],
         cors: {
             origin: "*",
             methods: ["GET", "POST"]

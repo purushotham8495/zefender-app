@@ -916,7 +916,10 @@
                             return;
                         }
 
-                        const socket = io();
+                        const socket = io({
+                            transports: ['websocket'],
+                            upgrade: false
+                        });
                         this.socket = socket;
 
                         socket.emit('register', JSON.stringify({

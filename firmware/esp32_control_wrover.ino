@@ -443,5 +443,6 @@ void loop() {
         socket.emit("heartbeat", output.c_str());
     }
     
-    delay(10); 
+    // Relaxed loop delay (50ms) for stability
+    delay(50); 
 }
