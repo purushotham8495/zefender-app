@@ -1036,6 +1036,26 @@
                 },
 
                 async toggleGPIO(pinOrAction) {
+                    // OPTIMISTIC UPDATE
+                    let targetGpio = null;
+                    let previousState = null;
+
+                    if (typeof pinOrAction !== 'string') {
+                        // It's a pin number
+                        targetGpio = this.gpios.find(g => g.pin_number === pinOrAction);
+                        if (targetGpio) {
+                            previousState = targetGpio.is_active;
+                            // Immediately flip state visually
+                            targetGpio.is_active = !targetGpio.is_active;
+                        }
+                    } else if (pinOrAction === 'ALL_ON') {
+                        // Turn all on visually
+                        this.gpios.forEach(g => g.is_active = true);
+                    } else if (pinOrAction === 'ALL_OFF') {
+                        // Turn all off visually
+                        this.gpios.forEach(g => g.is_active = false);
+                    }
+
                     try {
                         const payload = typeof pinOrAction === 'string'
                             ? { action: pinOrAction }
@@ -1048,10 +1068,20 @@
                         });
                         const result = await response.json();
 
-                        if (typeof pinOrAction === 'string' && result.success) {
-                            this.showToast(pinOrAction === 'ALL_ON' ? 'All Pins Activated' : 'All Pins Deactivated');
+                        if (!result.success) {
+                            // REVERT ON FAILURE
+                            if (targetGpio) targetGpio.is_active = previousState;
+                            alert('Command failed: ' + (result.error || 'Check connection'));
+                        } else {
+                            if (typeof pinOrAction === 'string') {
+                                this.showToast(pinOrAction === 'ALL_ON' ? 'All Pins Activated' : 'All Pins Deactivated');
+                            }
                         }
-                    } catch (err) { console.error(err); }
+                    } catch (err) { 
+                        console.error(err);
+                        // REVERT ON ERROR
+                        if (targetGpio) targetGpio.is_active = previousState;
+                    }
                 },
 
                 async pulseGPIO(pin, duration) {

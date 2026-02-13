@@ -26,7 +26,7 @@
 #define WIFI_PASSWORD   "Spk@0209"
 
 // Server Connection
-char host[] = "mintcream-marten-438766.hostingersite.com"; 
+char host[] = "admin.zefender.com"; 
 int port = 80;
 char path[] = "/socket.io/?transport=websocket"; // Force WebSocket for stability
 
