@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+    --font-sans: "Inter", sans-serif;
+}
+
+/* Force dark mode to use class strategy */
+@custom-variant dark (&:where(.dark, .dark *));

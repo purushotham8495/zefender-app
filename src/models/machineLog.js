@@ -25,7 +25,7 @@ const MachineLog = sequelize.define('MachineLog', {
         allowNull: false
     },
     action_type: {
-        type: DataTypes.ENUM('payment_trigger', 'manual_trigger', 'test_run', 'gpio_toggle', 'gpio_pulse', 'gpio_config_update', 'emergency_stop', 'ota_update'),
+        type: DataTypes.ENUM('payment_trigger', 'manual_trigger', 'test_run', 'gpio_toggle', 'gpio_pulse', 'gpio_config_update', 'emergency_stop', 'ota_update', 'device_log'),
         allowNull: false
     },
     description: {

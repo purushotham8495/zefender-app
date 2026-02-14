@@ -121,6 +121,14 @@ exports.controlCenter = async (req, res) => {
             raw: true
         });
 
+        // Fetch Recent Logs (NEW)
+        const recentLogs = await MachineLog.findAll({
+            where: { machine_id },
+            order: [['timestamp', 'DESC']],
+            limit: 50,
+            raw: true
+        });
+
         // Prepare Frontend Data (Safe Injection)
         const frontendData = {
             machine_id: machinePlain.machine_id || '',
@@ -131,6 +139,10 @@ exports.controlCenter = async (req, res) => {
             gpios: machinePlain.gpios || [],
             sequences: machinePlain.sequences || [],
             transactions: recentTransactions || [],
+            recentLogs: recentLogs.map(l => ({
+                time: l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : '',
+                message: l.description || ''
+            })) || [],
             last_heartbeat: machinePlain.last_heartbeat
         };
 

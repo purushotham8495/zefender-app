@@ -902,7 +902,7 @@
                 otaModalOpen: false,
                 uploadingOTA: false,
                 otaFile: null,
-                machineLogs: [],
+                machineLogs: serverData.recentLogs || [],
                 showLogs: true,
 
                 init() {
@@ -1036,7 +1036,7 @@
                 },
 
                 async toggleGPIO(pinOrAction) {
-                    // OPTIMISTIC UPDATE
+                    // OPTIMISTIC UPDATE: Immediate visual feedback
                     let targetGpio = null;
                     let previousState = null;
 
@@ -1077,7 +1077,7 @@
                                 this.showToast(pinOrAction === 'ALL_ON' ? 'All Pins Activated' : 'All Pins Deactivated');
                             }
                         }
-                    } catch (err) { 
+                    } catch (err) {
                         console.error(err);
                         // REVERT ON ERROR
                         if (targetGpio) targetGpio.is_active = previousState;

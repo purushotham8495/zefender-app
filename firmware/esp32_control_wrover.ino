@@ -349,8 +349,14 @@ void handleUpdateUpload() {
 
 // ====================== MAIN SETUP & LOOP ======================
 
+// ====================== MAIN SETUP & LOOP ======================
+
 void setup() {
     Serial.begin(115200);
+    
+    // NOTE: Hardware Watchdog removed to prevent boot loops/compilation errors.
+    // relying on Software Watchdog in loop().
+
     initDefaultPins();
 
     pinMode(BUZZER_PIN, OUTPUT);
@@ -363,11 +369,17 @@ void setup() {
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     Serial.print("Connecting to WiFi");
-    while (WiFi.status() != WL_CONNECTED) {
+    
+    unsigned long startM = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startM < 10000) {
         delay(500);
         Serial.print(".");
     }
-    Serial.println("\n✅ WiFi Connected: " + WiFi.localIP().toString());
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("\n✅ WiFi Connected: " + WiFi.localIP().toString());
+    } else {
+        Serial.println("\n❌ WiFi Failed (will retry in loop)");
+    }
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
@@ -380,7 +392,7 @@ void setup() {
     socket.on("ota_update", onOTAUpdate);
 
     socket.begin(host, port, path);
-    lastHeartbeat = millis(); // Prevent boot spam
+    lastHeartbeat = millis(); 
     
     server.on("/", HTTP_GET, handleRoot);
     server.on("/update", HTTP_GET, handleUpdateGet);
@@ -389,39 +401,58 @@ void setup() {
 }
 
 void loop() {
-    // 1. WiFi Auto-Recovery
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("⚠ WiFi Lost! Reconnecting...");
-        WiFi.disconnect(); 
-        WiFi.reconnect();
-        unsigned long start = millis();
-        while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) delay(100);
-        if (WiFi.status() == WL_CONNECTED) Serial.println("✅ WiFi Restored");
-    }
-
-    // 2. Service Loops
-    socket.loop();
-    server.handleClient();
+    // 1. HARDWARE PRIORITY: Always Service Engine & Pulses FIRST
+    // This ensures pumps/sequences never freeze even if WiFi dies
     engine.update();
     updatePulses();
 
-    // 3. Connection Watchdog (3 Minutes)
-    if (isSocketConnected) {
-        lastConnectionTime = millis();
-    } else if (millis() - lastConnectionTime > WATCHDOG_TIMEOUT) {
-        Serial.println("💀 Watchdog: Offline > 3min. Rebooting...");
-        delay(1000);
-        ESP.restart();
+    // 2. WiFi Auto-Recovery (Non-Blocking)
+    if (WiFi.status() != WL_CONNECTED) {
+        static unsigned long lastWifiReconnectAttempt = 0;
+        if (millis() - lastWifiReconnectAttempt > 5000) {
+            lastWifiReconnectAttempt = millis();
+            Serial.println("⚠ WiFi Lost! Initiating non-blocking reconnect...");
+            WiFi.disconnect();
+            WiFi.reconnect();
+        }
+        // Do not block. Do not run socket.loop(). Just return to keep engine running.
+        return; 
     }
 
-    // 4. Daily Maintenance Reboot (24 Hours)
+    // 3. Service Network Loops (Only if WiFi is Up)
+    socket.loop();
+    server.handleClient();
+
+    // 4. Connection Watchdog (3 Minutes)
+    // If socket is disconnected for too long despite WiFi, reboot.
+    if (isSocketConnected) {
+        lastConnectionTime = millis();
+    } else {
+        // If WiFi is connected but Socket isn't (for > 3 mins)
+        if (millis() - lastConnectionTime > WATCHDOG_TIMEOUT) {
+            Serial.println("💀 Watchdog: Socket Offline > 3min. Rebooting...");
+            delay(1000);
+            ESP.restart();
+        }
+        
+        // Force Re-init if Socket disconnected but WiFi OK
+        static unsigned long lastSocketRetry = 0;
+        if (millis() - lastSocketRetry > 5000) {
+            lastSocketRetry = millis();
+            // We are already in the !isSocketConnected block, so just retry.
+            Serial.println("🔄 Retrying Socket Connection...");
+            socket.begin(host, port, path);
+        }
+    }
+
+    // 5. Daily Maintenance Reboot (24 Hours) - ONLY IF IDLE
     if (millis() > DAILY_REBOOT_INTERVAL && !engine.isBusy()) {
         Serial.println("✨ Daily Maintenance Reboot");
         delay(1000);
         ESP.restart();
     }
 
-    // 5. Heartbeat
+    // 6. Heartbeat
     if (isSocketConnected && (millis() - lastHeartbeat > HEARTBEAT_INTERVAL)) {
         lastHeartbeat = millis();
         DynamicJsonDocument doc(2048);
@@ -443,6 +474,6 @@ void loop() {
         socket.emit("heartbeat", output.c_str());
     }
     
-    // Relaxed loop delay (50ms) for stability
-    delay(50); 
+    // Fast Loop
+    delay(10); 
 }

@@ -31,7 +31,25 @@
         <% } %>
 
             <!-- Machines Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-12">
+            <div x-data="{
+                    statuses: <%= JSON.stringify(machines.reduce((acc, m) => ({ ...acc, [m.machine_id]: m.is_connected }), {})) %>,
+                    socket: null,
+                    init() {
+                        this.socket = io();
+                        const machineIds = Object.keys(this.statuses);
+                        
+                        // Register for updates for all machines
+                        machineIds.forEach(id => {
+                            this.socket.emit('register', { machine_id: id, client_type: 'web' });
+                        });
+
+                        this.socket.on('machine_update', (data) => {
+                            if (this.statuses.hasOwnProperty(data.machine_id)) {
+                                this.statuses[data.machine_id] = data.is_connected;
+                            }
+                        });
+                    }
+                }" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-12">
                 <% machines.forEach(machine=> { %>
                     <div
                         class="bg-white dark:bg-[#1e293b] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-slate-300 dark:border-slate-700/50 p-7 flex flex-col h-full transition-all hover:shadow-xl hover:border-indigo-500/30 dark:hover:border-indigo-500/30 group relative overflow-hidden">
@@ -65,10 +83,13 @@
                             <div class="flex flex-col items-end gap-2">
                                 <!-- Connectivity Status -->
                                 <span
-                                    class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all <%= machine.is_connected ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'text-red-500 bg-red-500/10 border border-red-500/20' %>">
+                                    :class="statuses['<%= machine.machine_id %>'] ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'text-red-500 bg-red-500/10 border-red-500/20'"
+                                    class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border">
                                     <span
-                                        class="w-1.5 h-1.5 rounded-full <%= machine.is_connected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500' %>"></span>
-                                    <%= machine.is_connected ? 'Link Active' : 'Offline' %>
+                                        :class="statuses['<%= machine.machine_id %>'] ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'"
+                                        class="w-1.5 h-1.5 rounded-full"></span>
+                                    <span
+                                        x-text="statuses['<%= machine.machine_id %>'] ? 'Link Active' : 'Offline'"></span>
                                 </span>
 
                                 <div class="flex gap-1 mt-2">
