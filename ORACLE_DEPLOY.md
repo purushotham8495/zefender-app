@@ -92,9 +92,14 @@ This is the **most critical step** for Socket.IO connection.
     sudo npm install -g pm2
     ```
 
-2.  **Start your app**:
+2.  **Build CSS (Tailwind v4)**:
     ```bash
-    cd ~/zefender-app
+    npm run build:css
+    ```
+
+3.  **Start your app**:
+    ```bash
+    pm2 delete zefender || true
     pm2 start src/server.js --name zefender
     pm2 save
     pm2 startup
