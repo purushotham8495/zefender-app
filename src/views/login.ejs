@@ -11,8 +11,7 @@
         rel="stylesheet">
     <script>
         // Theme initialization
-        if (localStorage.getItem('darkMode') === 'true' ||
-            (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('darkMode') === 'true' || (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
@@ -21,6 +20,7 @@
     <style>
         body {
             transition: background-color 0.5s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         @keyframes pulse-slow {
@@ -54,7 +54,7 @@
 
     <div class="w-full max-w-md relative">
         <div
-            class="bg-white dark:bg-white/[0.03] backdrop-blur-xl glow rounded-[2.5rem] p-10 md:p-12 relative overflow-hidden border border-slate-300 dark:border-white/10 shadow-2xl">
+            class="bg-white/80 dark:bg-white/[0.03] backdrop-blur-2xl rounded-[2.5rem] p-10 md:p-12 relative overflow-hidden border border-slate-300 dark:border-white/10 shadow-2xl">
             <!-- Header -->
             <div class="text-center mb-10 relative z-10">
                 <div
@@ -68,13 +68,12 @@
                 <h1
                     class="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-2 uppercase tracking-[0.05em]">
                     Zefender</h1>
-                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.2em] px-4">
-                    Secure Network Access
-                    Protocol</p>
+                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.3em] px-4">
+                    Secure Network Access Protocol</p>
             </div>
 
             <!-- Error State -->
-            <% if(error) { %>
+            <% if(locals.error) { %>
                 <div
                     class="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div
@@ -90,10 +89,8 @@
                 </div>
                 <% } %>
 
-                    <!-- Form -->
                     <form action="/login" method="POST" class="space-y-6 relative z-10">
-                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-
+                        <input type="hidden" name="_csrf" value="<%= locals.csrfToken || "" %>">
                         <div class="space-y-2">
                             <label
                                 class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] ml-2">Terminal
@@ -102,12 +99,8 @@
                                 <input type="text" name="username" required
                                     class="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-300 dark:border-white/10 rounded-2xl px-6 py-4 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/30 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700 shadow-inner"
                                     placeholder="USERNAME / EMAIL / NODE ID">
-                                <div
-                                    class="absolute inset-0 rounded-2xl bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                </div>
                             </div>
                         </div>
-
                         <div class="space-y-2">
                             <label
                                 class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] ml-2">Secure
@@ -115,13 +108,9 @@
                             <div class="relative group">
                                 <input type="password" name="password" required
                                     class="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-300 dark:border-white/10 rounded-2xl px-6 py-4 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/30 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-700 shadow-inner"
-                                    placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
-                                <div
-                                    class="absolute inset-0 rounded-2xl bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                </div>
+                                    placeholder="••••••••">
                             </div>
                         </div>
-
                         <div class="pt-4">
                             <button type="submit"
                                 class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] uppercase tracking-[0.3em] py-5 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-indigo-600/20 group overflow-hidden relative">
@@ -132,13 +121,10 @@
                             </button>
                         </div>
                     </form>
-
-                    <!-- Footer Details -->
                     <div
                         class="mt-10 pt-8 border-t border-slate-100 dark:border-white/5 flex flex-col items-center gap-4">
                         <p class="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em]">
-                            Encrypted Session
-                            (AES-256)</p>
+                            Encrypted Session (AES-256)</p>
                         <div class="flex gap-1.5">
                             <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                             <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
@@ -148,8 +134,6 @@
                         </div>
                     </div>
         </div>
-
-        <!-- System Status Tags -->
         <div class="mt-8 flex justify-center gap-8">
             <div class="flex flex-col items-center gap-1">
                 <span class="text-[8px] font-black text-slate-700 uppercase tracking-widest">Network Status</span>

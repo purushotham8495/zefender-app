@@ -217,44 +217,55 @@ exports.pulseGPIO = async (req, res) => {
 exports.runSequence = async (req, res) => {
     try {
         const { machine_id } = req.params;
-        const { transaction_id } = req.body; // Added transaction_id
-        const user = req.session.user; // Get user from session
+        const { transaction_id, sequence_id } = req.body; // Added sequence_id support
+        const user = req.session.user;
 
-        const sequences = await MachineSequence.findAll({
-            where: { machine_id },
-            order: [['step_index', 'ASC']]
-        });
+        // Fetch the machine to check its Primary Sequence setting
+        const machine = await Machine.findOne({ where: { machine_id } });
+        if (!machine) return res.status(404).json({ error: 'Machine not found' });
 
-        if (sequences.length === 0) {
-            return res.status(400).json({ error: 'No sequence defined for this machine' });
+        // DETERMINE WHICH SEQUENCE TO RUN
+        // Priority: 
+        // 1. Manually passed sequence_id (from clicking a specific button)
+        // 2. Machine's set Primary Sequence (for transactions)
+        // 3. Fallback to Cloud steps (DB_DEFAULT)
+        const targetSeqId = sequence_id || machine.primary_sequence_id || 'DB_DEFAULT';
+
+        let success = false;
+        let logDescription = "";
+
+        if (targetSeqId === 'DB_DEFAULT') {
+            const sequences = await MachineSequence.findAll({
+                where: { machine_id },
+                order: [['step_index', 'ASC']]
+            });
+            if (sequences.length === 0) return res.status(400).json({ error: 'No cloud sequence defined' });
+            success = socketManager.sendCommand(machine_id, 'run_sequence', { steps: sequences });
+            logDescription = transaction_id ? `Cloud Seq triggered by Tx ${transaction_id}` : 'Manual Cloud Seq Run';
+        } else {
+            // Trigger Local sequence by ID
+            success = socketManager.sendCommand(machine_id, 'run_sequence', { sequence_id: targetSeqId });
+            logDescription = transaction_id ? `Local Seq (${targetSeqId}) triggered by Tx ${transaction_id}` : `Manual Local Seq (${targetSeqId}) Run`;
         }
-
-        const success = socketManager.sendCommand(machine_id, 'run_sequence', { steps: sequences });
 
         if (success) {
             await Machine.update({ is_running_sequence: true }, { where: { machine_id } });
 
-            // LOGGING
-            const logDescription = transaction_id
-                ? `Sequence triggered by Transaction ${transaction_id}`
-                : 'Manual sequence run from control panel';
-
             await MachineLog.create({
                 machine_id,
                 user_id: user ? user.id : null,
-                triggered_by: user ? user.username : 'Manual Operator',
+                triggered_by: user ? user.username : (transaction_id ? 'Payment Gateway' : 'System'),
                 action_type: transaction_id ? 'payment_trigger' : 'manual_trigger',
                 description: logDescription,
                 status: 'success',
                 transaction_id: transaction_id || null
             });
 
-            // Update Transaction if applicable
             if (transaction_id) {
                 await Transaction.update({
                     trigger_status: 'processed',
-                    trigger_source: 'manual', // Assuming manual trigger from control panel for now
-                    triggered_by: user ? user.username : 'Manual Operator',
+                    trigger_source: user ? 'manual' : 'webhook',
+                    triggered_by: user ? user.username : 'Payment Gateway',
                     processed_at: new Date()
                 }, {
                     where: { razorpay_payment_id: transaction_id }
@@ -426,7 +437,8 @@ exports.otaUpdate = async (req, res) => {
             }
         }
 
-        const firmwareUrl = `${req.protocol}://${host}/uploads/ota/${req.file.filename}`;
+        // Force 'http' because ESP32 WiFiClient does not support SSL (https) for OTA downloads easily
+        const firmwareUrl = `http://${host}/uploads/ota/${req.file.filename}`;
         console.log(`[OTA] Starting update for ${machine_id} -> ${firmwareUrl}`);
 
         const success = socketManager.sendCommand(machine_id, 'ota_update', { url: firmwareUrl });

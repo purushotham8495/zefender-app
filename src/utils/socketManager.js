@@ -125,12 +125,18 @@ function init(server) {
         // 2. Heartbeat (Status/GPIOs)
         socket.on('heartbeat', async (data) => {
             if (socket.machine_id) {
+                console.log(`[HEARTBEAT] ❤️ From ${socket.machine_id} (Socket: ${socket.id})`);
                 let payload = data;
                 if (typeof data === 'string') {
                     try { payload = JSON.parse(data); } catch (e) { }
                 }
 
-                Machine.update({ last_heartbeat: new Date() }, { where: { machine_id: socket.machine_id } }).catch(() => { });
+                Machine.update({
+                    last_heartbeat: new Date(),
+                    is_connected: true
+                }, {
+                    where: { machine_id: socket.machine_id }
+                }).catch(() => { });
 
                 io.to(`machine_${socket.machine_id}`).emit('machine_update', {
                     machine_id: socket.machine_id,
@@ -138,6 +144,8 @@ function init(server) {
                     is_connected: true,
                     ...payload
                 });
+            } else {
+                console.warn(`[SOCKET] ⚠️ Heartbeat from unregistered socket: ${socket.id}`);
             }
         });
 

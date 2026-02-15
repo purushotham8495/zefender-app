@@ -243,10 +243,48 @@ void onDisconnect(const char * payload, size_t length) {
     isSocketConnected = false;
 }
 
+// ====================== LOCAL HARDCODED SEQUENCES ======================
+// Use this function to write sequences directly in C++ code
+void runLocalSequence(String id) {
+    logPrint("🔄 Triggering LOCAL Sequence: " + id);
+    isRunningSequence = true;
+
+    if (id == "INTERNAL_CLEAN") {
+        // Example: Hardcoded high-speed pulsing logic
+        relayOn(PIN_PUMP);
+        delay(2000);
+        relayOff(PIN_PUMP);
+        delay(500);
+        relayOn(PIN_PUMP);
+        delay(2000);
+        relayOff(PIN_PUMP);
+    } 
+    else if (id == "DRY_CYCLE") {
+        relayOn(PIN_FAN);
+        delay(5000);
+        relayOff(PIN_FAN);
+    }
+    else {
+        logPrint("❌ Unknown Local Sequence ID: " + id);
+    }
+
+    isRunningSequence = false;
+    if (isSocketConnected) socket.emit("sequence_complete", "{}");
+    logPrint("✅ Local Sequence Finished");
+}
+
 void onRunSequence(const char * payload, size_t length) {
     logPrint("📩 RUN SEQUENCE");
     DynamicJsonDocument doc(4096);
-    if (!deserializeJson(doc, payload) && doc.containsKey("steps")) {
+    deserializeJson(doc, payload);
+
+    // Check if the web sent a specific ID (Local Sequence)
+    if (doc.containsKey("sequence_id")) {
+        String seqId = doc["sequence_id"];
+        runLocalSequence(seqId);
+    } 
+    // Otherwise, handle it as a Cloud Sequence (JSON steps)
+    else if (doc.containsKey("steps")) {
         engine.loadSequence(doc["steps"].as<JsonArray>());
         engine.start();
     }

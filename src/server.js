@@ -88,6 +88,14 @@ sequelize.sync().then(async () => {
             console.log('✅ Transactions table migration complete');
         }
 
+        // 3. Check Machines (Primary Sequence Column)
+        const [machineCols] = await sequelize.query("SHOW COLUMNS FROM machines LIKE 'primary_sequence_id'");
+        if (machineCols.length === 0) {
+            console.log('Migrating machines table: Adding primary_sequence_id...');
+            await sequelize.query("ALTER TABLE machines ADD COLUMN primary_sequence_id VARCHAR(255) DEFAULT 'DB_DEFAULT'");
+            console.log('✅ Machines table migration complete');
+        }
+
         // 2. Check/Create MachineLogs
         await sequelize.query(`
             CREATE TABLE IF NOT EXISTS machine_logs (
