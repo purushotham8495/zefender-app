@@ -193,6 +193,14 @@ exports.getDashboard = async (req, res) => {
             ownerComparison: JSON.stringify(ownerComparison || [])
         };
 
+        // Machine Status List (Cluster View)
+        const machineStatuses = await Machine.findAll({
+            where: machineFilter,
+            attributes: ['machine_id', 'machine_name', 'is_connected', 'last_heartbeat'],
+            order: [['is_connected', 'DESC'], ['machine_id', 'ASC']],
+            raw: true
+        });
+
         res.render('dashboard', {
             kpis: {
                 totalRevenue,
@@ -204,6 +212,7 @@ exports.getDashboard = async (req, res) => {
             },
             charts: chartsData,
             recentActivity: recentActivityRaw,
+            machineStatuses, // Added this
             chartsJSON,
             currentRange: range,
             rangeLabel: getRangeLabel(range)

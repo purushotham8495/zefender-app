@@ -83,5 +83,6 @@ router.post('/machines/control/:machine_id/config', machineControlController.upd
 router.post('/machines/control/:machine_id/emergency-stop', machineControlController.emergencyStop);
 router.post('/machines/control/:machine_id/reconnect-wifi', machineControlController.reconnectWifi);
 router.post('/machines/control/:machine_id/ota', upload.single('firmware'), machineControlController.otaUpdate);
+router.post('/machines/control/:machine_id/update-primary', machineControlController.updatePrimarySequence);
 
 module.exports = router;

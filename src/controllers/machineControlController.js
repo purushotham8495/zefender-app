@@ -138,6 +138,7 @@ exports.controlCenter = async (req, res) => {
             networkInfo: machinePlain.network_info || {},
             gpios: machinePlain.gpios || [],
             sequences: machinePlain.sequences || [],
+            primary_sequence_id: machinePlain.primary_sequence_id || 'DB_DEFAULT',
             transactions: recentTransactions || [],
             recentLogs: recentLogs.map(l => ({
                 time: l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : '',
@@ -444,6 +445,19 @@ exports.otaUpdate = async (req, res) => {
         const success = socketManager.sendCommand(machine_id, 'ota_update', { url: firmwareUrl });
 
         res.json({ success, message: success ? 'OTA Command Sent' : 'Machine offline' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.updatePrimarySequence = async (req, res) => {
+    try {
+        const { machine_id } = req.params;
+        const { primary_sequence_id } = req.body;
+
+        await Machine.update({ primary_sequence_id }, { where: { machine_id } });
+
+        res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
