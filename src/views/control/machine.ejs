@@ -101,19 +101,22 @@
 
                     <% if(user.role==='admin' ) { %>
                         <!-- Settings Gear -->
-                        <button @click="otaModalOpen = true"
-                            class="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-all z-20 border border-slate-200 dark:border-slate-700/50 group shadow-sm">
-                            <span class="text-[9px] font-black uppercase tracking-widest hidden sm:inline">OTA
-                                Update</span>
-                            <svg class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z">
-                                </path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                        </button>
+                        <!-- Settings Gear -->
+                        <div class="absolute top-4 right-4 z-20">
+                            <button @click="otaModalOpen = true"
+                                class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-all border border-slate-200 dark:border-slate-700/50 group shadow-sm cursor-pointer">
+                                <span class="text-[9px] font-black uppercase tracking-widest hidden sm:inline">OTA
+                                    Update</span>
+                                <svg class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z">
+                                    </path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
                         <% } %>
                             <div class="text-center z-10 w-full px-16 relative">
                                 <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-1 truncate"
@@ -270,8 +273,8 @@
                             Live Transactions
                         </h3>
                         <div class="flex gap-2">
-                            <button @click="showQRModal = true"
-                                class="text-[9px] font-black text-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg border border-indigo-500/20 uppercase tracking-widest transition-all">
+                            <button @click="showQRModal = true; console.log('QR Clicked')"
+                                class="text-[9px] font-black text-indigo-500 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg border border-indigo-500/20 uppercase tracking-widest transition-all cursor-pointer z-50">
                                 Payment QR
                             </button>
                         </div>
@@ -1055,7 +1058,7 @@
                     </div>
 
                     <!-- Payment QR Modal -->
-                    <div x-show="showQRModal" class="fixed inset-0 z-[70] overflow-y-auto" x-cloak>
+                    <div id="qr-modal" x-show="showQRModal" class="fixed inset-0 z-[100] overflow-y-auto" x-cloak>
                         <!-- Fixed Backdrop -->
                         <div x-show="showQRModal" x-transition.opacity
                             class="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px]" @click="showQRModal = false">
@@ -1106,7 +1109,7 @@
                                     <!-- Actual QR Content -->
                                     <div x-show="qrTab === 'actual'" x-transition
                                         class="w-full h-full flex flex-col items-center justify-center gap-6">
-                                        <template x-if="actual_qr_url && actual_qr_url !== 'undefined'">
+                                        <template x-if="actual_qr_url && !actual_qr_url.includes('undefined')">
                                             <div class="contents">
                                                 <img :src="actual_qr_url"
                                                     class="w-full h-full object-contain filter drop-shadow-2xl">
@@ -1367,7 +1370,15 @@
                                     };
 
                                     // Start Socket.IO initialization
-                                    initSocket();
+                                    try {
+                                        initSocket();
+                                    } catch (err) {
+                                        console.error('Socket Init Failed:', err);
+                                    }
+
+                                    // Debug: Expose to window
+                                    window.validMachine = this;
+                                    console.log('MachineCtrl Initialized', this);
                                 },
 
                                 showToast(message) {
