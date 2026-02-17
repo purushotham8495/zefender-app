@@ -2,8 +2,8 @@ module.exports = {
     apps: [{
         name: 'zefender-app',
         script: './src/server.js',
-        instances: 'max', // Use all CPU cores
-        exec_mode: 'cluster',
+        instances: 1, // Single instance for session compatibility
+        exec_mode: 'fork', // Fork mode (not cluster) to avoid session issues
         env: {
             NODE_ENV: 'development',
             PORT: 3000
