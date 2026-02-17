@@ -1199,22 +1199,36 @@
                     </div>
 
                     <script>
+
                         // Server-side data injection (via Base64) - ROBUST AGAINST FORMATTERS
                         const encodedData = '<%= frontendDataEncoded %>';
                         let serverData = {};
                         try {
-                            serverData = JSON.parse(atob(encodedData));
+                            if (encodedData) serverData = JSON.parse(atob(encodedData));
                         } catch (e) {
                             console.error('Failed to decode server data', e);
+                            serverData = {};
                         }
 
-                        // Register Alpine component immediately (before Alpine starts)
+                        // Robust Alpine Component Definition
                         document.addEventListener('alpine:init', () => {
                             Alpine.data('machineCtrl', () => ({
-                                ...serverData,
+                                machine_id: serverData.machine_id || '',
+                                machine_name: serverData.machine_name || '',
+                                connected: !!serverData.connected,
+                                runningSequence: !!serverData.runningSequence,
+                                networkInfo: serverData.networkInfo || {},
+                                gpios: serverData.gpios || [],
+                                sequences: serverData.sequences || [],
+                                primary_sequence_id: serverData.primary_sequence_id || 'DB_DEFAULT',
+                                transactions: serverData.transactions || [],
+                                machineLogs: serverData.recentLogs || [],
+                                test_qr_url: serverData.test_qr_url,
+                                actual_qr_url: serverData.actual_qr_url,
                                 lastHeartbeat: '<%- machine.last_heartbeat ? new Date(machine.last_heartbeat).toLocaleString() : "Never" %>',
-                                pingMs: 0,
 
+                                // Local State
+                                pingMs: 0,
                                 gpioModalOpen: false,
                                 editedGpios: [],
                                 sequenceModalOpen: false,
@@ -1223,17 +1237,21 @@
                                 currentStepIndex: null,
                                 draggingIndex: null,
                                 socket: null,
-
                                 otaModalOpen: false,
                                 uploadingOTA: false,
                                 otaFile: null,
                                 showQRModal: false,
-                                machineLogs: serverData.recentLogs || [],
                                 showLogs: true,
+
 
                                 init() {
                                     console.log('Alpine Init - Machine ID:', this.machine_id);
-                                    console.log('Full Component Data:', this);
+
+                                    // FORCE CLOSE ALL MODALS ON INIT
+                                    this.gpioModalOpen = false;
+                                    this.sequenceModalOpen = false;
+                                    this.otaModalOpen = false;
+                                    this.showQRModal = false;
 
                                     // Wait for Socket.IO to be available
                                     const initSocket = () => {
@@ -1340,9 +1358,6 @@
                                                             g.is_active = (val === true || val === 1 || val === '1');
                                                         }
                                                     });
-                                                    // DEBUG: Check active pins after update
-                                                    const activePlz = this.gpios.filter(g => g.is_active).map(g => g.pin_number);
-                                                    if (this.runningSequence) console.log('Active Pins during Seq:', activePlz, 'States:', data.states);
                                                 }
 
                                                 if (data.is_running_sequence !== undefined) this.runningSequence = !!data.is_running_sequence;
