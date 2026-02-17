@@ -647,7 +647,7 @@
         <!-- Modals (Re-using existing logic with updated styling) -->
         <!-- GPIO Configuration Modal -->
         <!-- GPIO Configuration Modal -->
-        <div x-show="gpioModalOpen" style="display: none;" class="fixed inset-0 z-[60] overflow-y-auto" x-cloak>
+        <div :class="gpioModalOpen ? 'fixed' : 'hidden'" class="inset-0 z-[60] overflow-y-auto" x-cloak>
             <!-- Fixed Backdrop -->
             <div x-show="gpioModalOpen" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]"
                 @click="gpioModalOpen = false"></div>
@@ -758,7 +758,7 @@
             </div>
 
             <!-- Sequence Editor Modal -->
-            <div x-show="sequenceModalOpen" style="display: none;" class="fixed inset-0 z-[70] overflow-y-auto" x-cloak>
+            <div :class="sequenceModalOpen ? 'fixed' : 'hidden'" class="inset-0 z-[70] overflow-y-auto" x-cloak>
                 <!-- Fixed Backdrop -->
                 <div x-show="sequenceModalOpen" x-transition.opacity
                     class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="sequenceModalOpen = false"></div>
@@ -883,7 +883,7 @@
                 </div>
 
                 <!-- OTA Firmware Update Modal -->
-                <div x-show="otaModalOpen" style="display: none;" class="fixed inset-0 z-[80] overflow-y-auto" x-cloak>
+                <div :class="otaModalOpen ? 'fixed' : 'hidden'" class="inset-0 z-[80] overflow-y-auto" x-cloak>
                     <!-- Enhanced Dark Backdrop -->
                     <div x-show="otaModalOpen" x-transition.opacity
                         class="fixed inset-0 bg-slate-950/60 backdrop-blur-[4px]"
@@ -1073,8 +1073,8 @@
                     </div>
 
                     <!-- Payment QR Modal -->
-                    <div id="qr-modal" x-show="showQRModal" style="display: none;"
-                        class="fixed inset-0 z-[90] overflow-y-auto" x-cloak>
+                    <div id="qr-modal" :class="showQRModal ? 'fixed' : 'hidden'" class="inset-0 z-[90] overflow-y-auto"
+                        x-cloak>
                         <!-- Fixed Backdrop -->
                         <div x-show="showQRModal" x-transition.opacity
                             class="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px]" @click="showQRModal = false">
