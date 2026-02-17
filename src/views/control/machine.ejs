@@ -1213,6 +1213,7 @@
                         // Robust Alpine Component Definition
                         document.addEventListener('alpine:init', () => {
                             Alpine.data('machineCtrl', () => ({
+                                id: serverData.id || '',
                                 machine_id: serverData.machine_id || '',
                                 machine_name: serverData.machine_name || '',
                                 connected: !!serverData.connected,
