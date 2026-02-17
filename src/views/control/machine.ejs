@@ -28,6 +28,12 @@
     <div x-data="machineCtrl"
         class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans p-4 sm:p-6 lg:p-8">
 
+        <!-- SANITY CHECK BOX - IF YOU SEE THIS RED BOX, Z-INDEX WORKS -->
+        <div
+            style="position: fixed; top: 50px; right: 50px; width: 100px; height: 100px; background: red; z-index: 999999; border: 4px solid yellow; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+            TEST LAYER
+        </div>
+
         <!-- VISIBLE DEBUG STATUS -->
         <div
             class="fixed top-0 left-0 bg-black text-lime-400 font-mono text-[10px] p-1 z-[99999] opacity-80 pointer-events-none">
@@ -804,7 +810,7 @@
 
                                             <input type="text" x-model="s.description"
                                                 placeholder="Action Label (e.g. Tank Fill)"
-                                                class="bg-transparent border-none outline-none text-slate-800 dark:text-white font-bold text-xs placeholder-slate-400 dark:placeholder-slate-700 w-full focus:placeholder-slate-600 dark:focus:placeholder-slate-500 transition-all">
+                                                class="bg-transparent border-none outline-none text-slate-800 dark:text-white font-bold text-xs placeholder-slate-400 dark:placeholder-slate-700 w-full focus:placeholder-slate-600 dark:focus:placeholder-500 transition-all">
                                         </div>
                                         <button @click="editedSequences.splice(index, 1)"
                                             class="text-red-500/40 hover:text-red-500 transition-colors">
@@ -1080,11 +1086,12 @@
 
                     <!-- Payment QR Modal -->
                     <div id="qr-modal" :style="showQRModal ? 'display: block !important' : 'display: none !important'"
-                        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); overflow-y: auto;"
-                        x-cloak>
+                        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); overflow-y: auto; border: 10px solid red;">
 
                         <!-- Click Outside to Close -->
-                        <div @click="showQRModal = false" style="position: absolute; inset: 0; min-height: 100%;"></div>
+                        <div @click="showQRModal = false"
+                            style="position: absolute; inset: 0; min-height: 100%; background: rgba(255, 0, 0, 0.1);">
+                        </div>
 
                         <div class="flex items-center justify-center min-h-screen p-4">
                             <!-- Modal Box -->
