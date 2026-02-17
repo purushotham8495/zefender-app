@@ -1106,7 +1106,7 @@
                                     <!-- Actual QR Content -->
                                     <div x-show="qrTab === 'actual'" x-transition
                                         class="w-full h-full flex flex-col items-center justify-center gap-6">
-                                        <template x-if="actual_qr_url">
+                                        <template x-if="actual_qr_url && actual_qr_url !== 'undefined'">
                                             <div class="contents">
                                                 <img :src="actual_qr_url"
                                                     class="w-full h-full object-contain filter drop-shadow-2xl">
@@ -1233,6 +1233,7 @@
 
                                 init() {
                                     console.log('Alpine Init - Machine ID:', this.machine_id);
+                                    console.log('Full Component Data:', this);
 
                                     // Wait for Socket.IO to be available
                                     const initSocket = () => {
@@ -1478,15 +1479,22 @@
                                 },
 
                                 async reconnectWifi() {
+                                    console.log('reconnectWifi called');
                                     if (!confirm('Request WiFi Reconnection?')) return;
                                     try {
+                                        console.log('Sending request...');
                                         const response = await fetch(`/machines/control/${this.machine_id}/reconnect-wifi`, {
                                             method: 'POST',
                                             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<%= locals.csrfToken %>' }
                                         });
                                         const result = await response.json();
+                                        console.log('Result:', result);
                                         if (result.success) alert('Reconnection command sent');
-                                    } catch (err) { console.error(err); }
+                                        else alert('Failed: ' + result.error);
+                                    } catch (err) {
+                                        console.error('Reconnect Error:', err);
+                                        alert('Error sending command: ' + err.message);
+                                    }
                                 },
 
                                 openConfigModal() {
