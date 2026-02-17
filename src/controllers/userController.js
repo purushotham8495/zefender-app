@@ -335,3 +335,176 @@ exports.getOwnerRevenueChartData = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+exports.exportCSV = async (req, res) => {
+    try {
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).send('Unauthorized');
+        }
+
+        const users = await User.findAll({
+            where: { role: 'owner' },
+            order: [['createdAt', 'DESC']],
+            raw: true
+        });
+
+        // Get revenue stats per owner
+        const stats = await sequelize.query(`
+            SELECT 
+                m.owner_id,
+                COUNT(DISTINCT m.id) as machine_count,
+                SUM(t.amount) as total_revenue
+            FROM machines m
+            LEFT JOIN transactions t ON m.machine_id = t.machine_id AND t.payment_status = 'captured'
+            GROUP BY m.owner_id
+        `, { type: sequelize.QueryTypes.SELECT });
+
+        const statsMap = {};
+        stats.forEach(s => {
+            if (s.owner_id) statsMap[s.owner_id] = s;
+        });
+
+        const usersWithStats = users.map(u => {
+            const s = statsMap[u.id] || { machine_count: 0, total_revenue: 0 };
+            return {
+                ...u,
+                machine_count: s.machine_count || 0,
+                total_revenue: parseFloat(s.total_revenue) || 0
+            };
+        });
+
+        const { Parser } = require('json2csv');
+        const fields = [
+            { label: 'Username', value: 'username' },
+            { label: 'Email', value: 'email' },
+            { label: 'Phone', value: 'phone' },
+            { label: 'Status', value: 'status' },
+            { label: 'Machine Count', value: 'machine_count' },
+            { label: 'Total Revenue (INR)', value: 'total_revenue' },
+            { label: 'Joined Date', value: 'createdAt' }
+        ];
+
+        const json2csvParser = new Parser({ fields });
+        const csv = json2csvParser.parse(usersWithStats);
+
+        res.header('Content-Type', 'text/csv');
+        res.attachment(`owners_${Date.now()}.csv`);
+        return res.send(csv);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error exporting users: ' + error.message);
+    }
+};
+
+exports.exportXLSX = async (req, res) => {
+    try {
+        if (req.session.user.role !== 'admin') return res.status(403).send('Unauthorized');
+        const ExcelJS = require('exceljs');
+        const users = await User.findAll({ where: { role: 'owner' }, order: [['createdAt', 'DESC']] });
+
+        const stats = await sequelize.query(`
+            SELECT m.owner_id, COUNT(DISTINCT m.id) as machine_count, SUM(t.amount) as total_revenue
+            FROM machines m
+            LEFT JOIN transactions t ON m.machine_id = t.machine_id AND t.payment_status = 'captured'
+            GROUP BY m.owner_id
+        `, { type: sequelize.QueryTypes.SELECT });
+
+        const statsMap = {};
+        stats.forEach(s => { if (s.owner_id) statsMap[s.owner_id] = s; });
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Owners');
+
+        worksheet.columns = [
+            { header: 'Username', key: 'username', width: 20 },
+            { header: 'Email', key: 'email', width: 30 },
+            { header: 'Phone', key: 'phone', width: 20 },
+            { header: 'Status', key: 'status', width: 15 },
+            { header: 'Machines', key: 'machine_count', width: 10 },
+            { header: 'Revenue (INR)', key: 'total_revenue', width: 15 },
+            { header: 'Joined Date', key: 'createdAt', width: 25 }
+        ];
+
+        users.forEach(u => {
+            const s = statsMap[u.id] || { machine_count: 0, total_revenue: 0 };
+            worksheet.addRow({
+                username: u.username,
+                email: u.email || 'N/A',
+                phone: u.phone || 'N/A',
+                status: u.status,
+                machine_count: s.machine_count,
+                total_revenue: parseFloat(s.total_revenue) || 0,
+                createdAt: u.createdAt
+            });
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=owners_${Date.now()}.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error exporting XLSX: ' + error.message);
+    }
+};
+
+exports.exportPDF = async (req, res) => {
+    try {
+        if (req.session.user.role !== 'admin') return res.status(403).send('Unauthorized');
+        const PDFDocument = require('pdfkit');
+        const users = await User.findAll({ where: { role: 'owner' }, order: [['createdAt', 'DESC']] });
+
+        const stats = await sequelize.query(`
+            SELECT m.owner_id, COUNT(DISTINCT m.id) as machine_count, SUM(t.amount) as total_revenue
+            FROM machines m
+            LEFT JOIN transactions t ON m.machine_id = t.machine_id AND t.payment_status = 'captured'
+            GROUP BY m.owner_id
+        `, { type: sequelize.QueryTypes.SELECT });
+
+        const statsMap = {};
+        stats.forEach(s => { if (s.owner_id) statsMap[s.owner_id] = s; });
+
+        const doc = new PDFDocument({ margin: 30, size: 'A4' });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=owners_${Date.now()}.pdf`);
+
+        doc.pipe(res);
+        doc.fontSize(20).text('Zefender Platform Partners', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, { align: 'center' });
+        doc.moveDown(2);
+
+        const startX = 30;
+        let currentY = doc.y;
+
+        doc.fontSize(10).font('Helvetica-Bold');
+        doc.text('Username', startX, currentY);
+        doc.text('Machines', startX + 150, currentY);
+        doc.text('Revenue', startX + 220, currentY);
+        doc.text('Status', startX + 320, currentY);
+        doc.text('Phone', startX + 400, currentY);
+
+        doc.moveDown();
+        doc.strokeColor('#aaaaaa').lineWidth(1).moveTo(startX, doc.y).lineTo(560, doc.y).stroke();
+        doc.moveDown(0.5);
+
+        doc.font('Helvetica').fontSize(9);
+        users.forEach(u => {
+            if (doc.y > 750) doc.addPage();
+            const s = statsMap[u.id] || { machine_count: 0, total_revenue: 0 };
+            currentY = doc.y;
+            doc.text(u.username, startX, currentY);
+            doc.text(s.machine_count.toString(), startX + 150, currentY);
+            doc.text(`INR ${parseFloat(s.total_revenue || 0).toFixed(2)}`, startX + 220, currentY);
+            doc.text(u.status, startX + 320, currentY);
+            doc.text(u.phone || 'N/A', startX + 400, currentY);
+            doc.moveDown();
+        });
+
+        doc.end();
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error exporting PDF: ' + error.message);
+    }
+};

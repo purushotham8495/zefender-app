@@ -26,34 +26,71 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-const csrfProtection = csrf({ cookie: true });
+// Multer Config for QR Codes
+const qrStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = path.join(__dirname, '../public/uploads/qrcodes');
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        const machineId = req.body.machine_id || req.params.machine_id || 'unknown';
+        cb(null, `qr_${machineId}_${file.fieldname}_${Date.now()}${ext}`);
+    }
+});
+const qrUpload = multer({ qrStorage });
 
-router.use(csrfProtection);
-router.use((req, res, next) => {
-    res.locals.csrfToken = req.csrfToken();
+const csrfProtection = csrf();
+
+// Custom middleware to expose CSRF and User to EJS
+const setupLocals = (req, res, next) => {
+    res.locals.csrfToken = req.csrfToken ? req.csrfToken() : null;
     res.locals.user = req.session.user || null;
     next();
-});
+};
 
-// Diagnostic Route
+// 1. Diagnostics (No Auth, No CSRF)
 router.get('/ping', (req, res) => res.send('pong'));
 
-router.get('/login', authController.loginPage);
-router.post('/login', authController.login);
-router.get('/logout', authController.logout);
-router.get('/change-password', isAuthenticated, authController.changePasswordPage);
-router.post('/change-password', isAuthenticated, authController.changePassword);
+// 2. Auth routes (Apply CSRF)
+router.get('/login', csrfProtection, setupLocals, (req, res, next) => {
+    if (req.session.user) return res.redirect('/');
+    next();
+}, authController.loginPage);
 
+router.post('/login', csrfProtection, setupLocals, authController.login);
+
+router.get('/logout', authController.logout);
+
+// 3. Authenticated Routes Protection
 router.use(isAuthenticated);
+
+// 4. MULTIPART ROUTES (Multer FIRST, then CSRF)
+// These need special handling because Multer must parse the body before CSRF can check the token if it's in the body.
+router.post('/machines/create', qrUpload.fields([{ name: 'test_qr', maxCount: 1 }, { name: 'actual_qr', maxCount: 1 }]), csrfProtection, setupLocals, machineController.create);
+router.post('/machines/update/:id', qrUpload.fields([{ name: 'test_qr', maxCount: 1 }, { name: 'actual_qr', maxCount: 1 }]), csrfProtection, setupLocals, machineController.edit);
+
+// 5. Global CSRF for all other dashboard routes
+router.use(csrfProtection);
+router.use(setupLocals);
 
 router.get('/', dashboardController.getDashboard);
 router.get('/dashboard/revenue-chart', dashboardController.getRevenueChartData);
 router.get('/machines', machineController.list);
-router.post('/machines/create', machineController.create);
-router.post('/machines/update/:id', machineController.edit);
-router.post('/machines/delete/:id', machineController.delete);
+router.get('/machines/export', machineController.exportCSV);
+router.get('/machines/export-xlsx', machineController.exportXLSX);
+router.get('/machines/export-pdf', machineController.exportPDF);
+router.post('/machines/delete/:id', machineController.delete); // Using POST for delete
+router.get('/machines/delete/:id', machineController.delete);
 router.get('/transactions', transactionController.list);
+router.get('/transactions/export', transactionController.exportCSV);
+router.get('/transactions/export-xlsx', transactionController.exportXLSX);
+router.get('/transactions/export-pdf', transactionController.exportPDF);
 router.get('/users', userController.list);
+router.get('/users/export', userController.exportCSV);
+router.get('/users/export-xlsx', userController.exportXLSX);
+router.get('/users/export-pdf', userController.exportPDF);
 router.get('/users/dashboard/:id', userController.ownerDashboard);
 router.get('/users/dashboard/:id/revenue-chart', userController.getOwnerRevenueChartData);
 router.post('/users/toggle-status/:id', userController.toggleStatus);
@@ -64,6 +101,9 @@ const machineControlController = require('../controllers/machineControlControlle
 
 router.get('/analytics', analyticsController.getStats);
 router.get('/logs', machineControlController.getLogs);
+router.get('/logs/export', machineControlController.exportLogs);
+router.get('/logs/export-xlsx', machineControlController.exportLogsXLSX);
+router.get('/logs/export-pdf', machineControlController.exportLogsPDF);
 
 // Profile Routes (for both admin and users)
 router.get('/admin/profile', profileController.showProfile);

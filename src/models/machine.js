@@ -55,6 +55,14 @@ const Machine = sequelize.define('Machine', {
     primary_sequence_id: {
         type: DataTypes.STRING, // Can be 'DB_DEFAULT' or 'INTERNAL_CLEAN', etc.
         defaultValue: 'DB_DEFAULT'
+    },
+    test_qr_url: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    actual_qr_url: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 }, {
     tableName: 'machines',

@@ -6,15 +6,69 @@
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Manage platform partners, monitor
                 performance, and analyze growth.</p>
         </div>
-        <button @click="$dispatch('open-modal', { mode: 'create' })"
-            class="group bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-8 rounded-2xl flex items-center shadow-[0_10px_25px_-5px_rgba(79,70,229,0.4)] transition-all active:scale-95 hover:-translate-y-0.5">
-            <div class="bg-white/20 p-1.5 rounded-lg mr-3 group-hover:rotate-12 transition-transform duration-300">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
-                </svg>
+        <div class="flex items-center gap-4">
+            <!-- Premium Export Dropdown -->
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" @click.away="open = false"
+                    class="flex items-center gap-3 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800/50 px-5 py-3 rounded-2xl shadow-sm hover:border-indigo-500/50 transition-all group">
+                    <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-400 transition-colors" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span
+                        class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-slate-400">Export
+                        Partners</span>
+                    <svg class="w-3 h-3 text-slate-400 group-hover:text-indigo-400 transition-transform"
+                        :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div x-show="open" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                    x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                    class="absolute right-0 mt-3 w-48 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                    <div class="p-2 space-y-1">
+                        <a href="/users/export"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                            <span class="w-2 h-2 rounded-full bg-slate-400 group-hover:bg-slate-500"></span>
+                            <span
+                                class="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400">Comma
+                                Separated (CSV)</span>
+                        </a>
+                        <a href="/users/export-xlsx"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors group">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 group-hover:bg-emerald-500"></span>
+                            <span
+                                class="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Excel
+                                Sheet (XLSX)</span>
+                        </a>
+                        <a href="/users/export-pdf"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group">
+                            <span class="w-2 h-2 rounded-full bg-red-400 group-hover:bg-red-500"></span>
+                            <span
+                                class="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">Printable
+                                Report (PDF)</span>
+                        </a>
+                    </div>
+                </div>
             </div>
-            Register New Partner
-        </button>
+
+            <button @click="$dispatch('open-modal', { mode: 'create' })"
+                class="group bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-8 rounded-2xl flex items-center shadow-[0_10px_25px_-5px_rgba(79,70,229,0.4)] transition-all active:scale-95 hover:-translate-y-0.5">
+                <div class="bg-white/20 p-1.5 rounded-lg mr-3 group-hover:rotate-12 transition-transform duration-300">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                Register New Partner
+            </button>
+        </div>
     </div>
 
     <!-- Error Alert -->
@@ -155,7 +209,7 @@
                         <!-- Actions -->
                         <div class="flex gap-3 mt-auto">
                             <form action="/users/toggle-status/<%= owner.id %>" method="POST" class="flex-grow">
-                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
                                 <button type="submit"
                                     class="w-full py-4 px-6 font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition-all active:scale-95 shadow-lg <%= owner.status === 'blocked' ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-slate-300 dark:text-slate-200 border border-slate-800 dark:border-slate-700/50' %>">
                                     <%= owner.status==='blocked' ? 'Grant Access' : 'Revoke Access' %>
@@ -163,7 +217,7 @@
                             </form>
                             <form action="/users/delete/<%= owner.id %>" method="POST"
                                 onsubmit="return confirm('Delete this owner? Actions are permanent.')">
-                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
                                 <button type="submit"
                                     class="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all active:scale-95 border border-red-500/20 shadow-sm">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,17 +251,23 @@
                         @open-modal.window="open = true; mode = $event.detail.mode; user = $event.detail.user || {}"
                         x-cloak class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
                         aria-modal="true">
+
+                        <!-- Fixed Backdrop -->
+                        <div x-show="open" x-transition.opacity
+                            class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="open = false"></div>
+
+                        <!-- Content Wrapper -->
                         <div
                             class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                            <div x-show="open" x-transition.opacity
-                                class="fixed inset-0 bg-slate-900/60 transition-opacity backdrop-blur-sm"
-                                @click="open = false"></div>
-                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen"
+                                aria-hidden="true">&#8203;</span>
+
+                            <!-- Modal Box -->
                             <div x-show="open" x-transition.scale.95
-                                class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-300 dark:border-slate-700">
+                                class="relative z-10 inline-block align-bottom bg-white dark:bg-slate-800 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-300 dark:border-slate-700">
                                 <form :action="mode === 'create' ? '/users/create' : '/users/update/' + user.id"
                                     method="POST">
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
                                     <div class="px-8 pt-8 pb-6">
                                         <div class="flex justify-between items-center mb-6">
                                             <h3 class="text-2xl font-bold text-slate-900 dark:text-white"

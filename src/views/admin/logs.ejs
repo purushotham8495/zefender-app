@@ -1,39 +1,106 @@
 <%- include('../partials/header') %>
 
-    <div class="-m-6 p-6 min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-800 dark:text-slate-200 font-sans">
+    <div x-data='{ query: <%= JSON.stringify(query) %> }'>
         <div class="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
             <div>
                 <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">System Activity Logs</h1>
                 <p class="text-[10px] text-slate-500 mt-2 font-black uppercase tracking-[0.2em]">Full Audit Trail &bull;
                     Machine Governance Log</p>
             </div>
-            <div
-                class="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-2 rounded-2xl shadow-sm">
-                <div class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse mx-2"></div>
-                <span
-                    class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest pr-2">Immutable
-                    Governance Active</span>
+            <div class="flex flex-wrap items-center gap-4">
+                <a href="/logs"
+                    class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">
+                    Reset Filters
+                </a>
+
+                <!-- Premium Export Dropdown -->
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" @click.away="open = false"
+                        class="flex items-center gap-3 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800/50 px-5 py-3 rounded-2xl shadow-sm hover:border-indigo-500/50 transition-all group">
+                        <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-400 transition-colors" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span
+                            class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-slate-400">Export
+                            History</span>
+                        <svg class="w-3 h-3 text-slate-400 group-hover:text-indigo-400 transition-transform"
+                            :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div x-show="open" x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                        x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                        class="absolute right-0 mt-3 w-48 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                        <div class="p-2 space-y-1">
+                            <a href="/logs/export?<%= new URLSearchParams(query).toString() %>"
+                                class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                                <span class="w-2 h-2 rounded-full bg-slate-400 group-hover:bg-slate-500"></span>
+                                <span
+                                    class="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400">History
+                                    CSV</span>
+                            </a>
+                            <a href="/logs/export-xlsx?<%= new URLSearchParams(query).toString() %>"
+                                class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors group">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 group-hover:bg-emerald-500"></span>
+                                <span
+                                    class="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Excel
+                                    Sheet</span>
+                            </a>
+                            <a href="/logs/export-pdf?<%= new URLSearchParams(query).toString() %>"
+                                class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group">
+                                <span class="w-2 h-2 rounded-full bg-red-400 group-hover:bg-red-500"></span>
+                                <span
+                                    class="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">Audit
+                                    PDF</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-sm">
+                    <div class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse mx-2"></div>
+                    <span
+                        class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest pr-2">Immutable
+                        Governance Active</span>
+                </div>
             </div>
         </div>
 
         <!-- Filter Bar -->
         <div
-            class="bg-white dark:bg-[#1e293b] p-6 rounded-[2rem] shadow-sm border border-slate-300 dark:border-slate-700/50 mb-10 overflow-hidden relative">
+            class="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 mb-10 overflow-hidden relative">
             <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-transparent to-transparent"></div>
             <form action="/logs" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end relative z-10">
-                <div class="space-y-1.5">
+                <div class="space-y-1.5 md:col-span-2">
                     <label
-                        class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Target
-                        Node</label>
-                    <input type="text" name="machine_id" value="<%= query.machine_id || '' %>" placeholder="Node ID"
-                        class="block w-full bg-slate-50 dark:bg-[#0f172a] border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white px-4 py-3 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all placeholder:text-slate-400">
+                        class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Search
+                        Logs</label>
+                    <div class="relative">
+                        <input type="text" name="search" value="<%= query.search || '' %>"
+                            placeholder="Machine name, ID, user, or description..."
+                            class="block w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all placeholder:text-slate-400">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
                 <div class="space-y-1.5">
                     <label
                         class="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Action
                         Type</label>
                     <select name="action_type"
-                        class="block w-full bg-slate-50 dark:bg-[#0f172a] border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white px-4 py-3 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all">
+                        class="block w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white px-4 py-3 focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all">
                         <option value="">All Actions</option>
                         <option value="payment_trigger" <%=query.action_type==='payment_trigger' ? 'selected' : '' %>
                             >Payment Trigger</option>
@@ -47,10 +114,9 @@
                             >Emergency Stop</option>
                     </select>
                 </div>
-                <div></div>
                 <button type="submit"
                     class="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[10px] uppercase tracking-[0.2em] py-4 px-6 rounded-xl transition-all active:scale-95 shadow-xl hover:bg-indigo-600 dark:hover:bg-indigo-500 hover:text-white border border-transparent">
-                    Filter Logs
+                    Apply Filter
                 </button>
             </form>
         </div>
@@ -59,57 +125,63 @@
         <div
             class="bg-white dark:bg-[#1e293b] rounded-xl shadow-sm border border-slate-300 dark:border-slate-700/50 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse min-w-[1000px]">
                     <thead>
                         <tr
-                            class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-300 dark:border-slate-700/50">
+                            class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-300 dark:border-slate-700/50">
                             <th class="px-6 py-4 font-black">Timestamp</th>
-                            <th class="px-6 py-4 font-black">Machine</th>
+                            <th class="px-6 py-4 font-black">Machine & Node</th>
                             <th class="px-6 py-4 font-black">Triggered By</th>
-                            <th class="px-6 py-4 font-black">Action</th>
-                            <th class="px-6 py-4 font-black">Description/Link</th>
-                            <th class="px-6 py-4 font-black text-center">Execution Status</th>
+                            <th class="px-6 py-4 font-black">Action Type</th>
+                            <th class="px-6 py-4 font-black">Activity Description</th>
+                            <th class="px-6 py-4 font-black text-center">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 dark:divide-slate-700/50 text-sm">
                         <% logs.forEach(log=> { %>
                             <tr
                                 class="hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-all border-b border-slate-300 dark:border-slate-800/50">
-                                <td class="px-6 py-5 text-slate-500 dark:text-slate-400 font-bold whitespace-nowrap">
+                                <td
+                                    class="px-6 py-5 text-slate-500 dark:text-slate-400 font-bold whitespace-nowrap text-xs">
                                     <%= new Date(log.timestamp).toLocaleString() %>
                                 </td>
                                 <td class="px-6 py-5">
-                                    <div class="text-slate-900 dark:text-white font-black uppercase tracking-tight">
+                                    <div
+                                        class="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xs">
                                         <%= log.Machine ? log.Machine.machine_name : 'N/A' %>
                                     </div>
                                     <div
-                                        class="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mt-0.5">
-                                        <%= log.machine_id %>
+                                        class="text-slate-400 dark:text-slate-500 text-[9px] font-black uppercase tracking-widest mt-0.5">
+                                        Node: <%= log.machine_id %>
+                                            <% if(log.Machine && log.Machine.location) { %>
+                                                &bull; <%= log.Machine.location %>
+                                                    <% } %>
                                     </div>
                                 </td>
                                 <td class="px-6 py-5">
                                     <span
-                                        class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-[10px] uppercase tracking-widest border border-slate-200 dark:border-slate-700">
+                                        class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-[9px] uppercase tracking-widest border border-slate-200 dark:border-slate-700">
                                         <%= log.triggered_by %>
                                     </span>
                                 </td>
                                 <td class="px-6 py-5">
-                                    <span class="text-[10px] font-black uppercase tracking-widest" :class="{
-                                    'text-indigo-500': '<%= log.action_type %>' === 'payment_trigger',
-                                    'text-emerald-500': '<%= log.action_type %>' === 'manual_trigger',
-                                    'text-red-500': '<%= log.action_type %>' === 'emergency_stop'
-                                }">
+                                    <span
+                                        class="text-[10px] font-black uppercase tracking-widest <%= 
+                                        log.action_type === 'payment_trigger' ? 'text-indigo-500' : 
+                                        (log.action_type === 'manual_trigger' ? 'text-emerald-500' : 
+                                        (log.action_type === 'emergency_stop' ? 'text-red-500' : 'text-slate-400')) %>">
                                         <%= log.action_type.replace('_', ' ' ) %>
                                     </span>
                                 </td>
                                 <td class="px-6 py-5">
-                                    <div class="text-slate-600 dark:text-slate-400 font-medium max-w-md truncate">
+                                    <div
+                                        class="text-slate-600 dark:text-slate-400 font-medium max-w-md line-clamp-2 text-xs">
                                         <%= log.description %>
                                     </div>
                                     <% if(log.transaction_id) { %>
                                         <div
                                             class="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 mt-1 select-all">
-                                            Payment Ref: <%= log.transaction_id %>
+                                            PAY_ID: <%= log.transaction_id %>
                                         </div>
                                         <% } %>
                                 </td>
@@ -123,7 +195,9 @@
                             <% }); %>
                                 <% if(logs.length===0) { %>
                                     <tr>
-                                        <td colspan="6" class="p-8 text-center text-slate-500">No activity logs found.
+                                        <td colspan="6"
+                                            class="p-20 text-center text-slate-500 font-black uppercase tracking-widest text-xs">
+                                            No activity records match your current filters.
                                         </td>
                                     </tr>
                                     <% } %>
@@ -135,21 +209,17 @@
             <% if(totalPages> 1) { %>
                 <div
                     class="px-6 py-4 border-t border-slate-300 dark:border-slate-700/50 flex items-center justify-between bg-slate-50 dark:bg-slate-800/20">
-                    <div class="text-sm text-slate-500 dark:text-slate-400">
-                        Page <span class="font-bold text-slate-900 dark:text-white">
-                            <%= currentPage %>
-                        </span> of <span class="font-bold text-slate-900 dark:text-white">
-                            <%= totalPages %>
-                        </span>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                        Viewing Page <%= currentPage %> of <%= totalPages %>
                     </div>
                     <div class="flex space-x-2">
                         <% if(currentPage> 1) { %>
                             <a href="/logs?<%= new URLSearchParams({...query, page: currentPage - 1}).toString() %>"
-                                class="px-3 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm font-bold rounded transition-colors shadow-sm">Previous</a>
+                                class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm hover:border-indigo-500">Prev</a>
                             <% } %>
                                 <% if(currentPage < totalPages) { %>
                                     <a href="/logs?<%= new URLSearchParams({...query, page: currentPage + 1}).toString() %>"
-                                        class="px-3 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-white text-sm font-bold rounded transition-colors shadow-sm">Next</a>
+                                        class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm hover:border-indigo-500">Next</a>
                                     <% } %>
                     </div>
                 </div>

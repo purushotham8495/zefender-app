@@ -55,7 +55,7 @@
                                     </div>
 
                                     <form action="/admin/profile/update" method="POST" class="p-6 space-y-6">
-                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
 
                                         <!-- Username -->
                                         <div>
@@ -108,7 +108,7 @@
                                     </div>
 
                                     <form action="/admin/profile/password" method="POST" class="p-6 space-y-6">
-                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
 
                                         <!-- Current Password -->
                                         <div>

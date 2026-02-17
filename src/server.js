@@ -42,14 +42,15 @@ app.use(helmet({
 
 app.use(cors());
 app.use(compression());
-app.use(morgan('tiny'));
+// Use 'combined' format for production (Apache-style), 'dev' for development
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(cookieParser());
 
 // Session
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: { secure: false }
 }));
 
@@ -70,6 +71,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 const webRoutes = require('./routes/web');
 app.use('/api', apiRoutes);
 app.use('/', webRoutes);
+
+// CSRF & Error Handling
+app.use((err, req, res, next) => {
+    if (err.code === 'EBADCSRFTOKEN') {
+        // Handle CSRF token errors here
+        console.warn('CSRF Token Mismatch/Missing:', req.url);
+        if (req.url === '/login') {
+            return res.render('login', { error: 'Your session has expired. Please try again.' });
+        }
+        // For other routes, redirect back if possible
+        const backURL = req.header('Referer') || '/';
+        return res.redirect(backURL);
+    }
+
+    console.error('Unhandled Error:', err);
+    res.status(err.status || 500).send(err.message || 'Internal Server Error');
+});
 
 // Database Sync
 sequelize.sync().then(async () => {
@@ -94,6 +112,14 @@ sequelize.sync().then(async () => {
             console.log('Migrating machines table: Adding primary_sequence_id...');
             await sequelize.query("ALTER TABLE machines ADD COLUMN primary_sequence_id VARCHAR(255) DEFAULT 'DB_DEFAULT'");
             console.log('✅ Machines table migration complete');
+        }
+
+        const [qrCols] = await sequelize.query("SHOW COLUMNS FROM machines LIKE 'test_qr_url'");
+        if (qrCols.length === 0) {
+            console.log('Migrating machines table: Adding QR URL columns...');
+            await sequelize.query("ALTER TABLE machines ADD COLUMN test_qr_url VARCHAR(255) NULL");
+            await sequelize.query("ALTER TABLE machines ADD COLUMN actual_qr_url VARCHAR(255) NULL");
+            console.log('✅ Machines table QR columns added');
         }
 
         // 2. Check/Create MachineLogs

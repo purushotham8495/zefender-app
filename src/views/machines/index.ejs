@@ -1,22 +1,79 @@
 <%- include('../partials/header') %>
 
-    <div class="mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6" x-data="{}">
-        <div>
-            <h1 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Machine Management</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Monitor, configure, and manage your
+    <div class="mb-6 sm:mb-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-4 sm:gap-6"
+        x-data="{}">
+        <div class="w-full lg:w-auto">
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                Machine Management</h1>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium">Monitor, configure, and
+                manage your
                 fleet of vending units in real-time.</p>
         </div>
-        <% if(user && user.role==='admin' ) { %>
-            <button @click="$dispatch('open-modal', { mode: 'create' })"
-                class="group bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-8 rounded-2xl flex items-center shadow-[0_10px_25px_-5px_rgba(16,185,129,0.4)] transition-all active:scale-95 hover:-translate-y-0.5">
-                <div class="bg-white/20 p-1.5 rounded-lg mr-3 group-hover:rotate-90 transition-transform duration-300">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+        <div class="flex flex-wrap items-center gap-2 sm:gap-4 w-full lg:w-auto">
+            <!-- Premium Export Dropdown -->
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" @click.away="open = false"
+                    class="flex items-center gap-3 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800/50 px-5 py-3 rounded-2xl shadow-sm hover:border-indigo-500/50 transition-all group">
+                    <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-400 transition-colors" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
+                    <span
+                        class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-slate-400">Export
+                        Fleet</span>
+                    <svg class="w-3 h-3 text-slate-400 group-hover:text-indigo-400 transition-transform"
+                        :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div x-show="open" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                    x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                    class="absolute right-0 mt-3 w-48 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                    <div class="p-2 space-y-1">
+                        <a href="/machines/export"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                            <span class="w-2 h-2 rounded-full bg-slate-400 group-hover:bg-slate-500"></span>
+                            <span
+                                class="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400">Comma
+                                Separated (CSV)</span>
+                        </a>
+                        <a href="/machines/export-xlsx"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors group">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 group-hover:bg-emerald-500"></span>
+                            <span
+                                class="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Excel
+                                Sheet (XLSX)</span>
+                        </a>
+                        <a href="/machines/export-pdf"
+                            class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group">
+                            <span class="w-2 h-2 rounded-full bg-red-400 group-hover:bg-red-500"></span>
+                            <span
+                                class="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400">Printable
+                                Report (PDF)</span>
+                        </a>
+                    </div>
                 </div>
-                Deploy New Unit
-            </button>
-            <% } %>
+            </div>
+            <% if(user && user.role==='admin' ) { %>
+                <button @click="$dispatch('open-modal', { mode: 'create' })"
+                    class="group bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-8 rounded-2xl flex items-center shadow-[0_10px_25px_-5px_rgba(16,185,129,0.4)] transition-all active:scale-95 hover:-translate-y-0.5">
+                    <div
+                        class="bg-white/20 p-1.5 rounded-lg mr-3 group-hover:rotate-90 transition-transform duration-300">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                    Deploy New Unit
+                </button>
+                <% } %>
+        </div>
     </div>
 
     <!-- Error Alert -->
@@ -49,63 +106,70 @@
                             }
                         });
                     }
-                }" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-12">
+                }"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 mb-12">
                 <% machines.forEach(machine=> { %>
                     <div
-                        class="bg-white dark:bg-[#1e293b] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-slate-300 dark:border-slate-700/50 p-7 flex flex-col h-full transition-all hover:shadow-xl hover:border-indigo-500/30 dark:hover:border-indigo-500/30 group relative overflow-hidden">
-
-                        <!-- Premium Background Detail -->
-                        <div
-                            class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-colors">
-                        </div>
+                        class="bg-[#111827] rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl border border-slate-800/50 p-5 sm:p-8 flex flex-col h-full transition-all hover:border-indigo-500/30 group relative overflow-hidden">
 
                         <!-- Card Header -->
-                        <div class="flex justify-between items-start mb-6 relative z-10">
-                            <div class="flex items-center gap-4">
+                        <div
+                            class="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4 sm:gap-0 mb-6 sm:mb-8 relative z-10">
+                            <div class="flex items-center gap-3 sm:gap-5 flex-1 min-w-0">
                                 <div
-                                    class="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform shadow-inner">
-                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    class="w-12 h-12 sm:w-16 sm:h-16 rounded-[1rem] sm:rounded-[1.25rem] bg-[#1f2937] border border-slate-700/50 flex items-center justify-center text-indigo-400 shadow-xl group-hover:scale-110 transition-transform flex-shrink-0">
+                                    <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                             d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                                     </svg>
                                 </div>
-                                <div>
+                                <div class="space-y-1 min-w-0 flex-1">
                                     <h3
-                                        class="text-xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">
+                                        class="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight uppercase truncate">
                                         <%= machine.machine_id %>
                                     </h3>
                                     <p
-                                        class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] font-black mt-1">
-                                        <%= machine.machine_name || 'UNNAMED UNIT' %>
+                                        class="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-[0.15em] sm:tracking-[0.2em] font-black italic truncate">
+                                        <%= machine.machine_name || 'ZEFENDER' %>
                                     </p>
                                 </div>
                             </div>
-                            <div class="flex flex-col items-end gap-2">
+                            <div class="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-3 w-full sm:w-auto">
                                 <!-- Connectivity Status -->
                                 <span
-                                    :class="statuses['<%= machine.machine_id %>'] ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'text-red-500 bg-red-500/10 border-red-500/20'"
-                                    class="flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border">
+                                    :class="statuses['<%= machine.machine_id %>'] ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30'"
+                                    class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border transition-all flex-shrink-0">
                                     <span
-                                        :class="statuses['<%= machine.machine_id %>'] ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'"
-                                        class="w-1.5 h-1.5 rounded-full"></span>
+                                        :class="statuses['<%= machine.machine_id %>'] ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'"
+                                        class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full relative">
+                                        <template x-if="statuses['<%= machine.machine_id %>']">
+                                            <span
+                                                class="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75"></span>
+                                        </template>
+                                    </span>
                                     <span
-                                        x-text="statuses['<%= machine.machine_id %>'] ? 'Link Active' : 'Offline'"></span>
+                                        :class="statuses['<%= machine.machine_id %>'] ? 'text-emerald-400' : 'text-red-400'"
+                                        class="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.08em] sm:tracking-[0.1em] whitespace-nowrap"
+                                        x-text="statuses['<%= machine.machine_id %>'] ? 'ONLINE' : 'OFFLINE'"></span>
                                 </span>
 
-                                <div class="flex gap-1 mt-2">
+                                <div class="flex gap-2 sm:gap-2.5 flex-wrap">
                                     <a href="/machines/control/<%= machine.machine_id %>"
-                                        class="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all border border-transparent shadow-sm"
+                                        class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-[#1f2937] rounded-full text-slate-400 hover:text-indigo-400 hover:bg-[#2d3748] transition-all border border-slate-700/30 shadow-lg flex-shrink-0"
                                         title="Remote Control">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                                 d="M13 10V3L4 14h7v7l9-11h-7z" />
                                         </svg>
                                     </a>
                                     <button
-                                        @click="$dispatch('open-modal', { mode: 'edit', machine: <%= JSON.stringify(machine) %> })"
-                                        class="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all border border-transparent shadow-sm"
-                                        title="Edit Details">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        @click="$dispatch('open-qr-view', { test_qr: '<%= machine.test_qr_url %>', actual_qr: '<%= machine.actual_qr_url %>', machine: <%= JSON.stringify(machine) %> })"
+                                        class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-[#1f2937] rounded-full text-slate-400 hover:text-indigo-400 hover:bg-[#2d3748] transition-all border border-slate-700/30 shadow-lg flex-shrink-0"
+                                        title="View QRs">
+                                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -115,10 +179,10 @@
                                     <% if(user && user.role==='admin' ) { %>
                                         <form action="/machines/delete/<%= machine.id %>" method="POST" class="inline"
                                             onsubmit="return confirm('Delete this machine?')">
-                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="_csrf" value="<%= locals.csrfToken %>">
                                             <button type="submit"
-                                                class="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all border border-transparent shadow-sm">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-[#1f2937] rounded-full text-slate-400 hover:text-red-500 hover:bg-[#2d3748] transition-all border border-slate-700/30 shadow-lg flex-shrink-0">
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         stroke-width="2"
@@ -132,83 +196,80 @@
                         </div>
 
                         <!-- Card Body -->
-                        <div class="space-y-5 flex-grow relative z-10">
+                        <div class="space-y-6 flex-grow relative z-10">
+                            <!-- Assigned Owner -->
                             <div
-                                class="flex justify-between items-center text-sm bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-700/30">
-                                <div class="flex flex-col">
+                                class="bg-[#1f2937]/30 p-5 rounded-[1.5rem] border border-slate-800/50 flex justify-between items-center group/owner">
+                                <div>
                                     <span
-                                        class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Assigned
+                                        class="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Assigned
                                         Owner</span>
-                                    <span class="text-slate-900 dark:text-white font-bold mt-0.5">
-                                        <%= machine.owner ? machine.owner.username : 'Floating Unit' %>
-                                    </span>
+                                    <p class="text-white font-black text-lg">
+                                        <%= machine.owner ? machine.owner.username : 'Zefender' %>
+                                    </p>
                                 </div>
-                                <% if(user.role==='admin' ) { %>
+                                <% if(user && user.role==='admin' ) { %>
                                     <button
                                         @click="$dispatch('open-modal', { mode: 'edit', machine: <%= JSON.stringify(machine) %> })"
-                                        class="bg-white dark:bg-slate-700 px-3 py-1.5 rounded-lg text-indigo-500 hover:text-indigo-400 text-[10px] font-black uppercase border border-slate-300 dark:border-slate-600 shadow-sm transition-all">Move</button>
+                                        class="px-5 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-indigo-500/20">MOVE</button>
                                     <% } %>
                             </div>
 
-                            <!-- Revenue Comparison -->
-                            <div class="grid grid-cols-2 gap-3">
-                                <div
-                                    class="bg-emerald-500/[0.03] dark:bg-emerald-500/[0.03] p-4 rounded-2xl border border-emerald-500/10 group-hover:bg-emerald-500/[0.06] transition-all">
-                                    <p
-                                        class="text-[10px] text-emerald-600/60 dark:text-emerald-500/40 uppercase tracking-widest font-black mb-1">
-                                        Today</p>
-                                    <p class="text-xl font-black text-slate-900 dark:text-white leading-none">₹<%=
-                                            machine.today_revenue %>
-                                    </p>
+                            <div class="grid grid-cols-2 gap-5">
+                                <div class="bg-[#1f2937]/30 p-6 rounded-[1.5rem] border border-slate-800/50">
+                                    <span
+                                        class="block text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.2em] mb-2">TODAY</span>
+                                    <span class="text-3xl font-black text-white leading-none">₹<%= machine.today_revenue
+                                            || 0 %></span>
                                 </div>
-                                <div
-                                    class="bg-indigo-500/[0.03] dark:bg-indigo-500/[0.03] p-4 rounded-2xl border border-indigo-500/10 group-hover:bg-indigo-500/[0.06] transition-all">
-                                    <p
-                                        class="text-[10px] text-indigo-600/60 dark:text-indigo-500/40 uppercase tracking-widest font-black mb-1">
-                                        Total</p>
-                                    <p class="text-xl font-black text-slate-900 dark:text-white leading-none">₹<%=
-                                            machine.total_revenue %>
-                                    </p>
+                                <div class="bg-[#1f2937]/30 p-6 rounded-[1.5rem] border border-slate-800/50">
+                                    <span
+                                        class="block text-[10px] font-black text-indigo-500/60 uppercase tracking-[0.2em] mb-2">TOTAL</span>
+                                    <span class="text-3xl font-black text-white leading-none">₹<%= machine.total_revenue
+                                            || 0 %></span>
                                 </div>
                             </div>
 
-                            <div class="space-y-2.5 px-1 pb-2">
-                                <div
-                                    class="flex justify-between items-center bg-slate-50/50 dark:bg-transparent px-2 py-1.5 rounded-lg">
+                            <div class="space-y-4 px-2">
+                                <div class="flex justify-between items-center group/row">
                                     <span
-                                        class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Cost/Cycle</span>
-                                    <span class="text-slate-900 dark:text-slate-100 font-black text-sm">₹<%=
-                                            (machine.cleaning_cost || 0) %></span>
+                                        class="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em]">COST/CYCLE</span>
+                                    <span class="text-white font-black text-xl">₹<%= (machine.cleaning_cost || 0) %>
+                                    </span>
                                 </div>
-                                <div class="flex justify-between items-center px-2">
+                                <div class="flex justify-between items-center group/row">
                                     <span
-                                        class="text-[10px] uppercase font-black text-slate-400 tracking-widest">Location</span>
-                                    <span class="text-slate-900 dark:text-slate-300 italic text-[11px] font-bold">
-                                        <%= machine.location || 'Unknown' %>
+                                        class="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em]">LOCATION</span>
+                                    <span class="text-slate-400 italic text-sm font-black uppercase tracking-widest">
+                                        <%= machine.location || 'RNSIT' %>
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Action Footer -->
-                        <div
-                            class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/50 flex flex-col gap-3 relative z-10">
+                        <!-- Large Bottom Button -->
+                        <div class="mt-8 pt-8 border-t border-slate-800/50 flex flex-col gap-4">
                             <a href="/machines/control/<%= machine.machine_id %>"
-                                class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_10px_20px_-5px_rgba(79,70,229,0.3)] transition-all hover:-translate-y-0.5 active:scale-95">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="w-full py-5 bg-[#5b4eff] hover:bg-[#4a3fcc] rounded-[1.5rem] text-white flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(91,78,255,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98]">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                         d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
-                                Control Unit
+                                <span class="font-black text-lg uppercase tracking-widest">CONTROL UNIT</span>
                             </a>
-                            <div class="flex items-center justify-center gap-4">
-                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Installed:
-                                    <%= new Date(machine.createdAt).toLocaleDateString() %>
-                                </span>
-                                <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+
+                            <div class="flex items-center justify-center gap-5">
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">INSTALLED:</span>
+                                    <span class="text-[9px] text-slate-300 font-black tracking-widest">
+                                        <%= new Date(machine.createdAt).toLocaleDateString() %>
+                                    </span>
+                                </div>
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-800"></span>
                                 <span
-                                    class="text-[9px] font-black uppercase tracking-widest <%= machine.status === 'active' ? 'text-emerald-500' : 'text-red-500' %>">
-                                    <%= machine.status==='active' ? 'Operational' : 'Halted' %>
+                                    class="text-[9px] font-black uppercase tracking-[0.2em] <%= machine.status === 'active' ? 'text-emerald-500' : 'text-red-500' %>">
+                                    <%= machine.status==='active' ? 'OPERATIONAL' : 'HALTED' %>
                                 </span>
                             </div>
                         </div>
@@ -236,105 +297,281 @@
                         @open-modal.window="open = true; mode = $event.detail.mode; machine = $event.detail.machine || {}"
                         x-cloak class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
                         aria-modal="true">
+
+                        <!-- Fixed Backdrop -->
+                        <div x-show="open" x-transition.opacity
+                            class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="open = false"></div>
+
+                        <!-- Content Wrapper -->
                         <div
                             class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                            <div x-show="open" x-transition.opacity
-                                class="fixed inset-0 bg-slate-900/60 transition-opacity backdrop-blur-sm"
-                                @click="open = false"></div>
-                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-                            <div x-show="open" x-transition.scale.95
-                                class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-300 dark:border-slate-700">
-                                <form
-                                    :action="mode === 'create' ? '/machines/create' : '/machines/update/' + machine.id"
-                                    method="POST">
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                    <div class="px-8 pt-8 pb-6">
-                                        <div class="flex justify-between items-center mb-6">
-                                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white"
-                                                x-text="mode === 'create' ? 'Deploy Machine' : 'Configure Machine'">
-                                            </h3>
-                                            <button type="button" @click="open = false"
-                                                class="text-slate-400 hover:text-slate-500"><svg class="w-6 h-6"
-                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg></button>
-                                        </div>
+                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen"
+                                aria-hidden="true">&#8203;</span>
 
-                                        <div class="space-y-5">
+                            <!-- Modal Box -->
+                            <div x-show="open" x-transition.scale
+                                class="relative z-10 inline-block align-bottom bg-white dark:bg-slate-800 rounded-[32px] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full border border-slate-200 dark:border-slate-700">
+                                <div
+                                    class="px-8 pt-8 pb-6 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+                                    <h3 class="text-2xl font-black text-slate-900 dark:text-white" id="modal-title"
+                                        x-text="mode === 'create' ? 'Deploy New Unit' : 'Configure Machine'"></h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1"
+                                        x-text="mode === 'create' ? 'Fill in the details to initialize a new vending machine.' : 'Update the machine configuration and settings.'">
+                                    </p>
+                                </div>
+
+                                <form
+                                    :action="mode === 'create' ? '/machines/create?_csrf=' + '<%= csrfToken %>' : '/machines/update/' + machine.id + '?_csrf=' + '<%= csrfToken %>'"
+                                    method="POST" enctype="multipart/form-data">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <div class="px-8 py-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
                                                 <label
-                                                    class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Machine
+                                                    class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Machine
                                                     ID</label>
-                                                <input type="text" name="machine_id" required
-                                                    :value="machine.machine_id" :readonly="mode === 'edit'"
-                                                    class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
-                                                    :class="mode === 'edit' ? 'opacity-60 cursor-not-allowed' : ''">
+                                                <input type="text" name="machine_id" :value="machine.machine_id"
+                                                    placeholder="MAC-1234..." required
+                                                    class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
                                             </div>
+                                            <div>
+                                                <label
+                                                    class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Machine
+                                                    Name</label>
+                                                <input type="text" name="machine_name" :value="machine.machine_name"
+                                                    placeholder="Lobby Vender..." required
+                                                    class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                                            </div>
+                                        </div>
 
-                                            <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label
+                                                class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Cleaning
+                                                Cost (₹)</label>
+                                            <input type="number" name="cleaning_cost" :value="machine.cleaning_cost"
+                                                placeholder="100" required
+                                                class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                                        </div>
+
+                                        <% if(user && user.role==='admin' ) { %>
+                                            <div>
+                                                <label
+                                                    class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Assigned
+                                                    Owner</label>
+                                                <select name="owner_id" :value="machine.owner_id"
+                                                    class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
+                                                    <option value="">-- No Owner Assigned --</option>
+                                                    <% owners.forEach(owner=> { %>
+                                                        <option value="<%= owner.id %>">
+                                                            <%= owner.username %>
+                                                        </option>
+                                                        <% }) %>
+                                                </select>
+                                            </div>
+                                            <% } %>
+
                                                 <div>
                                                     <label
-                                                        class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Display
-                                                        Name</label>
-                                                    <input type="text" name="machine_name" :value="machine.machine_name"
+                                                        class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Location</label>
+                                                    <input type="text" name="location" :value="machine.location"
+                                                        placeholder="e.g. Mall Entrance, Floor 1"
                                                         class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
                                                 </div>
-                                                <div>
-                                                    <label
-                                                        class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Cleaning
-                                                        Cost (₹)</label>
-                                                    <input type="number" step="0.01" name="cleaning_cost"
-                                                        :value="machine.cleaning_cost || 0"
-                                                        class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
-                                                </div>
-                                            </div>
 
-                                            <% if(user && user.role==='admin' ) { %>
-                                                <div>
+                                                <div x-show="mode === 'edit'">
                                                     <label
-                                                        class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Assigned
-                                                        Owner</label>
-                                                    <select name="owner_id" :value="machine.owner_id"
+                                                        class="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Status</label>
+                                                    <select name="status" :value="machine.status"
                                                         class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
-                                                        <option value="">-- No Owner Assigned --</option>
-                                                        <% owners.forEach(owner=> { %>
-                                                            <option value="<%= owner.id %>">
-                                                                <%= owner.username %>
-                                                            </option>
-                                                            <% }) %>
+                                                        <option value="active">Active (Running)</option>
+                                                        <option value="inactive">Inactive (Offline)</option>
                                                     </select>
                                                 </div>
-                                                <% } %>
 
-                                                    <div>
-                                                        <label
-                                                            class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Location</label>
-                                                        <input type="text" name="location" :value="machine.location"
-                                                            placeholder="e.g. Mall Entrance, Floor 1"
-                                                            class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+                                                <div
+                                                    class="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                                    <h4
+                                                        class="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">
+                                                        Upload Payment QR Codes</h4>
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <div>
+                                                            <label
+                                                                class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Test
+                                                                QR Code</label>
+                                                            <input type="file" name="test_qr" accept="image/*"
+                                                                class="block w-full text-xs text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-500/10 dark:file:text-indigo-400 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-500/20 transition-all">
+                                                        </div>
+                                                        <div>
+                                                            <label
+                                                                class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Actual
+                                                                QR Code</label>
+                                                            <input type="file" name="actual_qr" accept="image/*"
+                                                                class="block w-full text-xs text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-50 file:text-emerald-700 dark:file:bg-emerald-500/10 dark:file:text-emerald-400 hover:file:bg-emerald-100 dark:hover:file:bg-emerald-500/20 transition-all">
+                                                        </div>
                                                     </div>
-
-                                                    <div x-show="mode === 'edit'">
-                                                        <label
-                                                            class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Status</label>
-                                                        <select name="status" :value="machine.status"
-                                                            class="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
-                                                            <option value="active">Active (Running)</option>
-                                                            <option value="inactive">Inactive (Offline)</option>
-                                                        </select>
-                                                    </div>
-                                        </div>
+                                                </div>
                                     </div>
 
                                     <div class="px-8 pb-8 pt-4 flex gap-3">
                                         <button type="submit"
-                                            class="flex-grow py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95"
+                                            class="flex-grow py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
                                             x-text="mode === 'create' ? 'Deploy Machine' : 'Update Configuration'"></button>
                                         <button type="button" @click="open = false"
-                                            class="py-3 px-6 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">Cancel</button>
+                                            class="py-4 px-6 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">Cancel</button>
                                     </div>
                                 </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QR View Modal -->
+                    <div x-data="{ open: false, tab: 'actual', test_qr: '', actual_qr: '', machine: {} }" x-show="open"
+                        @open-qr-view.window="open = true; test_qr = $event.detail.test_qr; actual_qr = $event.detail.actual_qr; machine = $event.detail.machine; tab = $event.detail.actual_qr ? 'actual' : 'test'"
+                        x-cloak class="fixed z-50 inset-0 overflow-y-auto">
+
+                        <!-- Fixed Backdrop -->
+                        <div x-show="open" x-transition.opacity
+                            class="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px]" @click="open = false"></div>
+
+                        <div class="flex items-center justify-center min-h-screen p-4">
+                            <!-- Modal Box -->
+                            <div
+                                class="relative z-10 bg-[#111827] rounded-[3rem] shadow-2xl border border-slate-800 w-full max-w-lg overflow-hidden transform transition-all p-8">
+                                <div class="flex justify-between items-center mb-8">
+                                    <h3
+                                        class="text-2xl font-black text-white items-center flex gap-4 uppercase tracking-tight">
+                                        <div
+                                            class="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 4v1m0 11v1m5-11v1m0 11v1M7 9h10M7 12h10M7 15h10M6 5h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                                            </svg>
+                                        </div>
+                                        Payment Entry
+                                    </h3>
+                                    <button @click="open = false"
+                                        class="p-3 bg-slate-800/50 text-slate-400 hover:text-white rounded-full transition-colors border border-slate-700/50">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Custom Toggle -->
+                                <div class="bg-[#1f2937]/50 p-1.5 rounded-2xl border border-slate-700/50 flex mb-8">
+                                    <button @click="tab = 'actual'"
+                                        :class="tab === 'actual' ? 'bg-[#5b4eff] text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'"
+                                        class="flex-1 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">
+                                        Main QR
+                                    </button>
+                                    <button @click="tab = 'test'"
+                                        :class="tab === 'test' ? 'bg-[#5b4eff] text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'"
+                                        class="flex-1 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">
+                                        Testing QR
+                                    </button>
+                                </div>
+
+                                <div
+                                    class="relative aspect-square bg-[#1f2937]/30 rounded-[2rem] border border-slate-800/50 flex items-center justify-center p-10 overflow-hidden group">
+                                    <!-- Actual QR Content -->
+                                    <div x-show="tab === 'actual'"
+                                        x-transition:enter="transition ease-out duration-300 transform"
+                                        x-transition:enter-start="opacity-0 scale-95"
+                                        x-transition:enter-end="opacity-100 scale-100"
+                                        class="w-full h-full flex flex-col items-center justify-center gap-6">
+                                        <template x-if="actual_qr">
+                                            <div class="contents">
+                                                <img :src="actual_qr"
+                                                    class="w-full h-full object-contain filter drop-shadow-2xl">
+                                                <p
+                                                    class="text-[10px] text-emerald-400 font-black uppercase tracking-[0.3em] animate-pulse">
+                                                    Live Production</p>
+                                            </div>
+                                        </template>
+                                        <template x-if="!actual_qr">
+                                            <div class="text-center">
+                                                <div
+                                                    class="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center text-slate-600 mb-4 mx-auto">
+                                                    <svg class="w-8 h-8" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="1.5"
+                                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 00-2 2z" />
+                                                    </svg>
+                                                </div>
+                                                <span
+                                                    class="text-slate-500 text-xs font-black uppercase italic tracking-widest">No
+                                                    Main QR Uploaded</span>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Test QR Content -->
+                                    <div x-show="tab === 'test'"
+                                        x-transition:enter="transition ease-out duration-300 transform"
+                                        x-transition:enter-start="opacity-0 scale-95"
+                                        x-transition:enter-end="opacity-100 scale-100"
+                                        class="w-full h-full flex flex-col items-center justify-center gap-6">
+                                        <template x-if="test_qr">
+                                            <div class="contents">
+                                                <img :src="test_qr"
+                                                    class="w-full h-full object-contain filter drop-shadow-2xl">
+                                                <p
+                                                    class="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em] animate-pulse">
+                                                    Sandbox Testing</p>
+                                            </div>
+                                        </template>
+                                        <template x-if="!test_qr">
+                                            <div class="text-center">
+                                                <div
+                                                    class="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center text-slate-600 mb-4 mx-auto">
+                                                    <svg class="w-8 h-8" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="1.5"
+                                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 00-2 2z" />
+                                                    </svg>
+                                                </div>
+                                                <span
+                                                    class="text-slate-500 text-xs font-black uppercase italic tracking-widest">No
+                                                    Test QR Uploaded</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Upload/Update Section (One-by-One) -->
+                                <div class="mt-8 pt-8 border-t border-slate-800/50">
+                                    <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">
+                                        Change or Upload Codes</h4>
+                                    <form :action="'/machines/update/' + machine.id + '?_csrf=' + '<%= csrfToken %>'"
+                                        method="POST" enctype="multipart/form-data" class="space-y-4">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                                        <!-- Selective File Input based on Tab -->
+                                        <div x-show="tab === 'actual'" x-transition>
+                                            <label
+                                                class="block text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-3 ml-2">Upload
+                                                Main QR</label>
+                                            <input type="file" name="actual_qr" accept="image/*"
+                                                class="block w-full text-[10px] text-slate-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-[#1f2937] file:text-emerald-400 hover:file:bg-slate-700 transition-all border border-slate-800/50 bg-[#0f172a]/30 rounded-2xl">
+                                        </div>
+
+                                        <div x-show="tab === 'test'" x-transition>
+                                            <label
+                                                class="block text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-3 ml-2">Upload
+                                                Testing QR</label>
+                                            <input type="file" name="test_qr" accept="image/*"
+                                                class="block w-full text-[10px] text-slate-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:bg-[#1f2937] file:text-indigo-400 hover:file:bg-slate-700 transition-all border border-slate-800/50 bg-[#0f172a]/30 rounded-2xl">
+                                        </div>
+
+                                        <button type="submit"
+                                            class="w-full mt-4 py-4 bg-[#5b4eff] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-indigo-500/20 hover:bg-[#4a3fcc] transition-all active:scale-95">
+                                            Update Selected QR
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
