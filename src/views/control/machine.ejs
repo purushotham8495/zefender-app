@@ -647,10 +647,12 @@
         <!-- Modals (Re-using existing logic with updated styling) -->
         <!-- GPIO Configuration Modal -->
         <!-- GPIO Configuration Modal -->
-        <div :class="gpioModalOpen ? 'fixed' : 'hidden'" class="inset-0 z-[60] overflow-y-auto" x-cloak>
-            <!-- Fixed Backdrop -->
-            <div x-show="gpioModalOpen" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]"
-                @click="gpioModalOpen = false"></div>
+        <div :style="gpioModalOpen ? 'display: flex !important' : 'display: none !important'"
+            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;"
+            x-cloak>
+
+            <!-- Click Outside to Close -->
+            <div @click="gpioModalOpen = false" style="position: absolute; inset: 0;"></div>
 
             <div class="flex items-center justify-center min-h-screen p-4">
                 <!-- Modal Box -->
@@ -758,10 +760,12 @@
             </div>
 
             <!-- Sequence Editor Modal -->
-            <div :class="sequenceModalOpen ? 'fixed' : 'hidden'" class="inset-0 z-[70] overflow-y-auto" x-cloak>
-                <!-- Fixed Backdrop -->
-                <div x-show="sequenceModalOpen" x-transition.opacity
-                    class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="sequenceModalOpen = false"></div>
+            <div :style="sequenceModalOpen ? 'display: flex !important' : 'display: none !important'"
+                style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;"
+                x-cloak>
+
+                <!-- Click Outside to Close -->
+                <div @click="sequenceModalOpen = false" style="position: absolute; inset: 0;"></div>
 
                 <div class="flex items-center justify-center min-h-screen p-4">
                     <!-- Modal Box -->
@@ -883,11 +887,12 @@
                 </div>
 
                 <!-- OTA Firmware Update Modal -->
-                <div :class="otaModalOpen ? 'fixed' : 'hidden'" class="inset-0 z-[80] overflow-y-auto" x-cloak>
-                    <!-- Enhanced Dark Backdrop -->
-                    <div x-show="otaModalOpen" x-transition.opacity
-                        class="fixed inset-0 bg-slate-950/60 backdrop-blur-[4px]"
-                        @click="!uploadingOTA && (otaModalOpen = false)"></div>
+                <div :style="otaModalOpen ? 'display: flex !important' : 'display: none !important'"
+                    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); align-items: center; justify-content: center;"
+                    x-cloak>
+
+                    <!-- Click Outside to Close -->
+                    <div @click="!uploadingOTA && (otaModalOpen = false)" style="position: absolute; inset: 0;"></div>
 
                     <div class="flex items-center justify-center min-h-screen p-4">
                         <!-- Premium Modal Box (Matching Payment QR Look) -->
@@ -1073,12 +1078,12 @@
                     </div>
 
                     <!-- Payment QR Modal -->
-                    <div id="qr-modal" :class="showQRModal ? 'fixed' : 'hidden'" class="inset-0 z-[90] overflow-y-auto"
+                    <div id="qr-modal" :style="showQRModal ? 'display: flex !important' : 'display: none !important'"
+                        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); align-items: center; justify-content: center;"
                         x-cloak>
-                        <!-- Fixed Backdrop -->
-                        <div x-show="showQRModal" x-transition.opacity
-                            class="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px]" @click="showQRModal = false">
-                        </div>
+
+                        <!-- Click Outside to Close -->
+                        <div @click="showQRModal = false" style="position: absolute; inset: 0;"></div>
 
                         <div class="flex items-center justify-center min-h-screen p-4">
                             <!-- Modal Box -->
