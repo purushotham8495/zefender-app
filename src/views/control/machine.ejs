@@ -245,107 +245,200 @@
                     </div>
                 </button>
 
-                <!-- Audio Control Panel (MP3 Module — shown only when has_mp3_module is true) -->
+                <!-- ========= AUDIO CONTROL PANEL ========= -->
                 <template x-if="has_mp3_module">
-                    <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-violet-300/60 dark:border-violet-700/50 p-6 shadow-xl mb-4 relative overflow-hidden">
-                        <!-- Background gradient/glow -->
-                        <div class="absolute inset-0 bg-gradient-to-br from-violet-500/[0.03] to-transparent pointer-events-none"></div>
-                        <div class="relative z-10 space-y-5">
-                            <!-- Header -->
-                            <div class="flex justify-between items-center">
-                                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-                                    </svg>
-                                    Audio Control
-                                </h3>
-                                <span class="text-[9px] px-2.5 py-0.5 rounded-full border font-bold uppercase tracking-widest"
-                                    :class="mp3Playing ? 'bg-violet-500/20 text-violet-400 border-violet-500/30 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-300 dark:border-slate-700'">
-                                    <span x-text="mp3Playing ? 'PLAYING' : 'PAUSED/IDLE'"></span>
-                                </span>
-                            </div>
+                <div id="audio-control-panel" style="border-radius:16px;overflow:hidden;margin-bottom:16px;border:1px solid;box-shadow:0 4px 24px rgba(0,0,0,0.08);"
+                    :style="isDark ? 'background:#1e293b;border-color:#334155;' : 'background:#ffffff;border-color:#e2e8f0;'">
 
-                            <!-- Media Controls Container -->
-                            <div class="bg-slate-50 dark:bg-[#0f172a]/60 rounded-xl p-3 border border-slate-200 dark:border-slate-800 flex items-center justify-around">
-                                <!-- Prev Button -->
+                    <!-- Violet gradient top strip -->
+                    <div style="height:3px;background:linear-gradient(90deg,#7c3aed,#a855f7,#c026d3);"></div>
+
+                    <div style="padding:20px;display:flex;flex-direction:column;gap:16px;">
+
+                        <!-- ── Header row ── -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <!-- Animated sound bars -->
+                                <div style="display:flex;align-items:flex-end;gap:2px;height:16px;width:20px;" :style="mp3Playing ? '' : 'opacity:0.25'">
+                                    <span :class="mp3Playing ? 'animate-bounce' : ''" style="width:3px;border-radius:9999px;background:#7c3aed;height:40%;animation-delay:0ms;display:block;"></span>
+                                    <span :class="mp3Playing ? 'animate-bounce' : ''" style="width:3px;border-radius:9999px;background:#7c3aed;height:80%;animation-delay:120ms;display:block;"></span>
+                                    <span :class="mp3Playing ? 'animate-bounce' : ''" style="width:3px;border-radius:9999px;background:#7c3aed;height:55%;animation-delay:60ms;display:block;"></span>
+                                    <span :class="mp3Playing ? 'animate-bounce' : ''" style="width:3px;border-radius:9999px;background:#7c3aed;height:100%;animation-delay:180ms;display:block;"></span>
+                                </div>
+                                <span style="font-size:11px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;"
+                                    :style="isDark ? 'color:#94a3b8;' : 'color:#64748b;'">Audio Control</span>
+                            </div>
+                            <!-- Status badge -->
+                            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:9999px;border:1px solid;letter-spacing:0.08em;text-transform:uppercase;"
+                                :style="mp3Playing
+                                    ? (isDark ? 'background:rgba(124,58,237,0.15);color:#a78bfa;border-color:rgba(124,58,237,0.3);' : 'background:#ede9fe;color:#7c3aed;border-color:#c4b5fd;')
+                                    : (isDark ? 'background:rgba(51,65,85,0.6);color:#64748b;border-color:#334155;' : 'background:#f1f5f9;color:#94a3b8;border-color:#e2e8f0;')"
+                                x-text="mp3Playing ? '♪ PLAYING' : 'IDLE'">
+                            </span>
+                        </div>
+
+                        <!-- ── Now Playing banner ── -->
+                        <div style="border-radius:12px;border:1px solid;padding:10px 16px;text-align:center;"
+                            :style="isDark ? 'background:rgba(15,23,42,0.5);border-color:#1e293b;' : 'background:#f8fafc;border-color:#e2e8f0;'">
+                            <p style="font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 4px 0;"
+                                :style="isDark ? 'color:#475569;' : 'color:#94a3b8;'">Now Playing</p>
+                            <p style="font-size:14px;font-weight:800;margin:0;"
+                                :style="isDark ? 'color:#f1f5f9;' : 'color:#1e293b;'"
+                                x-text="currentPlayingTrack
+                                    ? '🎵 Track ' + (currentPlayingTrack < 10 ? '0' + currentPlayingTrack : currentPlayingTrack) + '.mp3'
+                                    : '— Select a track —'">
+                            </p>
+                        </div>
+
+                        <!-- ── Transport Controls ── -->
+                        <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+
+                            <!-- PREV -->
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                 <button @click="prevMP3()" :disabled="!connected"
-                                    class="p-2.5 text-slate-500 hover:text-violet-500 dark:text-slate-400 dark:hover:text-violet-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-90 disabled:opacity-40"
+                                    style="width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;outline:none;"
+                                    :style="connected
+                                        ? (isDark ? 'background:#334155;color:#cbd5e1;' : 'background:#f1f5f9;color:#475569;')
+                                        : 'opacity:0.4;background:#f1f5f9;color:#94a3b8;cursor:not-allowed;'"
+                                    onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter='none'"
                                     title="Previous Track">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M8.445 14.83a1 1 0 001.555-.832V10.75l4.445 4.08a1 1 0 001.555-.832V6a1 1 0 00-1.555-.832L10 9.25V6.83a1 1 0 00-1.555-.832l-6 5.5a1 1 0 000 1.664l6 5.5z"/>
-                                    </svg>
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
                                 </button>
+                                <span style="font-size:9px;font-weight:700;letter-spacing:0.07em;color:#94a3b8;">PREV</span>
+                            </div>
 
-                                <!-- Play/Resume Button -->
+                            <!-- PLAY -->
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                 <button @click="playMP3()" :disabled="!connected"
-                                    class="p-3 bg-violet-600 hover:bg-violet-500 text-white rounded-full shadow-lg shadow-violet-500/20 transition-all active:scale-90 disabled:opacity-40"
+                                    style="width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#7c3aed;color:#ffffff;box-shadow:0 4px 16px rgba(124,58,237,0.35);transition:all 0.15s;outline:none;"
+                                    :style="!connected ? 'opacity:0.4;cursor:not-allowed;' : ''"
+                                    onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#7c3aed'"
                                     title="Play / Resume">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
-                                    </svg>
+                                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="margin-left:2px;"><path d="M8 5v14l11-7z"/></svg>
                                 </button>
+                                <span style="font-size:9px;font-weight:700;letter-spacing:0.07em;color:#7c3aed;">PLAY</span>
+                            </div>
 
-                                <!-- Pause Button -->
+                            <!-- PAUSE -->
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                 <button @click="pauseMP3()" :disabled="!connected"
-                                    class="p-3 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full transition-all active:scale-90 disabled:opacity-40"
+                                    style="width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;outline:none;"
+                                    :style="connected
+                                        ? (isDark ? 'background:#334155;color:#cbd5e1;' : 'background:#f1f5f9;color:#475569;')
+                                        : 'opacity:0.4;background:#f1f5f9;color:#94a3b8;cursor:not-allowed;'"
+                                    onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter='none'"
                                     title="Pause">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                    </svg>
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                                 </button>
+                                <span style="font-size:9px;font-weight:700;letter-spacing:0.07em;color:#94a3b8;">PAUSE</span>
+                            </div>
 
-                                <!-- Stop Button -->
+                            <!-- STOP -->
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                 <button @click="stopMP3()" :disabled="!connected"
-                                    class="p-2.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg border border-red-500/20 transition-all active:scale-90 disabled:opacity-40"
-                                    title="Stop Playback">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <rect x="5" y="5" width="10" height="10" rx="1.5" />
-                                    </svg>
+                                    style="width:38px;height:38px;border-radius:50%;border:1px solid;cursor:pointer;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,0.08);color:#ef4444;border-color:rgba(239,68,68,0.25);transition:all 0.15s;outline:none;"
+                                    :style="!connected ? 'opacity:0.4;cursor:not-allowed;' : ''"
+                                    onmouseover="this.style.background='#ef4444';this.style.color='#fff';this.style.borderColor='#ef4444'"
+                                    onmouseout="this.style.background='rgba(239,68,68,0.08)';this.style.color='#ef4444';this.style.borderColor='rgba(239,68,68,0.25)'"
+                                    title="Stop">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
                                 </button>
+                                <span style="font-size:9px;font-weight:700;letter-spacing:0.07em;color:#ef4444;">STOP</span>
+                            </div>
 
-                                <!-- Next Button -->
+                            <!-- NEXT -->
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
                                 <button @click="nextMP3()" :disabled="!connected"
-                                    class="p-2.5 text-slate-500 hover:text-violet-500 dark:text-slate-400 dark:hover:text-violet-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-90 disabled:opacity-40"
+                                    style="width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;outline:none;"
+                                    :style="connected
+                                        ? (isDark ? 'background:#334155;color:#cbd5e1;' : 'background:#f1f5f9;color:#475569;')
+                                        : 'opacity:0.4;background:#f1f5f9;color:#94a3b8;cursor:not-allowed;'"
+                                    onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter='none'"
                                     title="Next Track">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L9 10.75v2.418a1 1 0 001.555.832l6-5.5a1 1 0 000-1.664l-6-5.5A1 1 0 009 3.83v2.418L4.555 5.168z"/>
-                                    </svg>
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zm2-8.14 4.77 3.38L8 16.14V9.86zM16 6h2v12h-2z"/></svg>
                                 </button>
+                                <span style="font-size:9px;font-weight:700;letter-spacing:0.07em;color:#94a3b8;">NEXT</span>
                             </div>
 
-                            <!-- Volume Slider -->
-                            <div class="space-y-1.5">
-                                <div class="flex justify-between items-center text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                                    <span class="flex items-center gap-1">
-                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"/>
-                                        </svg>
-                                        Volume
-                                    </span>
-                                    <span x-text="mp3Volume + ' / 30'"></span>
-                                </div>
-                                <input type="range" min="0" max="30" x-model.number="mp3Volume" @input="setVolumeMP3(mp3Volume)" :disabled="!connected"
-                                    class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-violet-600 focus:outline-none disabled:opacity-40">
+                            <!-- LOOP -->
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                                <button @click="mp3Loop = !mp3Loop; setLoopMP3(mp3Loop)" :disabled="!connected"
+                                    style="width:38px;height:38px;border-radius:50%;border:1px solid;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;outline:none;"
+                                    :style="mp3Loop
+                                        ? 'background:#7c3aed;color:#ffffff;border-color:#7c3aed;'
+                                        : (connected
+                                            ? (isDark ? 'background:#334155;color:#94a3b8;border-color:#475569;' : 'background:#f1f5f9;color:#94a3b8;border-color:#e2e8f0;')
+                                            : 'opacity:0.4;background:#f1f5f9;color:#94a3b8;border-color:#e2e8f0;cursor:not-allowed;')"
+                                    title="Toggle Loop">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+                                </button>
+                                <span style="font-size:9px;font-weight:700;letter-spacing:0.07em;"
+                                    :style="mp3Loop ? 'color:#7c3aed;' : 'color:#94a3b8;'"
+                                    x-text="mp3Loop && mp3LoopTrack ? '🔁 ' + (mp3LoopTrack < 10 ? '0' : '') + mp3LoopTrack : 'LOOP'"></span>
                             </div>
 
-                            <!-- Quick Play Tracks -->
-                            <div class="space-y-1.5">
-                                <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Quick Tracks</span>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button @click="playMP3(1)" :disabled="!connected"
-                                        class="py-2 px-3 bg-violet-600/5 hover:bg-violet-600/10 text-violet-400 hover:text-violet-300 text-xs font-bold rounded-lg border border-violet-500/10 hover:border-violet-500/30 transition-all flex items-center justify-center gap-1.5">
-                                        <span class="text-[10px]">♫</span> Track 01
-                                    </button>
-                                    <button @click="playMP3(2)" :disabled="!connected"
-                                        class="py-2 px-3 bg-violet-600/5 hover:bg-violet-600/10 text-violet-400 hover:text-violet-300 text-xs font-bold rounded-lg border border-violet-500/10 hover:border-violet-500/30 transition-all flex items-center justify-center gap-1.5">
-                                        <span class="text-[10px]">♫</span> Track 02
-                                    </button>
+                        </div>
+
+                        <!-- ── Volume ── -->
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="opacity:0.45;flex-shrink:0;"
+                                        :style="isDark ? 'color:#94a3b8;' : 'color:#64748b;'">
+                                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                                    </svg>
+                                    <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;"
+                                        :style="isDark ? 'color:#64748b;' : 'color:#94a3b8;'">Volume</span>
                                 </div>
+                                <span style="font-size:12px;font-weight:800;color:#7c3aed;" x-text="mp3Volume + ' / 30'"></span>
+                            </div>
+                            <input type="range" min="0" max="30" x-model.number="mp3Volume"
+                                @input="setVolumeMP3(mp3Volume)"
+                                style="width:100%;height:6px;border-radius:9999px;appearance:none;cursor:pointer;accent-color:#7c3aed;outline:none;"
+                                :style="isDark ? 'background:#334155;' : 'background:#e2e8f0;'"
+                                :disabled="!connected">
+                        </div>
+
+                        <!-- ── Track List (10 tracks) ── -->
+                        <div>
+                            <p style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 8px 0;"
+                                :style="isDark ? 'color:#475569;' : 'color:#94a3b8;'">Tracks</p>
+                            <div style="display:flex;flex-direction:column;gap:5px;max-height:260px;overflow-y:auto;padding-right:2px;">
+                                <template x-for="n in 10" :key="n">
+                                    <button @click="playMP3(n)" :disabled="!connected"
+                                        style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:11px;border:1px solid;cursor:pointer;transition:all 0.15s;text-align:left;outline:none;position:relative;"
+                                        :style="currentPlayingTrack === n
+                                            ? 'background:#7c3aed;border-color:#7c3aed;color:#ffffff;box-shadow:0 2px 12px rgba(124,58,237,0.3);'
+                                            : (!connected
+                                                ? 'opacity:0.4;cursor:not-allowed;' + (isDark ? 'background:#1e293b;border-color:#334155;color:#475569;' : 'background:#f8fafc;border-color:#e2e8f0;color:#94a3b8;')
+                                                : (isDark ? 'background:#1e293b;border-color:#334155;color:#cbd5e1;' : 'background:#f8fafc;border-color:#e2e8f0;color:#374151;'))">
+                                        <!-- Track # badge -->
+                                        <span style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;"
+                                            :style="currentPlayingTrack === n
+                                                ? 'background:rgba(255,255,255,0.2);color:#ffffff;'
+                                                : (isDark ? 'background:rgba(124,58,237,0.15);color:#a78bfa;' : 'background:#ede9fe;color:#7c3aed;')"
+                                            x-text="(n < 10 ? '0' : '') + n"></span>
+                                        <!-- Name -->
+                                        <span style="flex:1;font-size:13px;font-weight:600;" x-text="'Track ' + (n < 10 ? '0' : '') + n + '.mp3'"></span>
+                                        <!-- Playing bars -->
+                                        <span x-show="currentPlayingTrack === n && mp3Playing"
+                                            style="display:flex;align-items:flex-end;gap:2px;height:14px;flex-shrink:0;">
+                                            <span class="animate-bounce" style="width:2px;border-radius:2px;background:rgba(255,255,255,0.85);height:40%;display:block;animation-delay:0ms;"></span>
+                                            <span class="animate-bounce" style="width:2px;border-radius:2px;background:rgba(255,255,255,0.85);height:100%;display:block;animation-delay:120ms;"></span>
+                                            <span class="animate-bounce" style="width:2px;border-radius:2px;background:rgba(255,255,255,0.85);height:60%;display:block;animation-delay:240ms;"></span>
+                                        </span>
+                                        <!-- Play chevron -->
+                                        <span x-show="!(currentPlayingTrack === n && mp3Playing)" style="flex-shrink:0;opacity:0.3;">
+                                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        </span>
+                                    </button>
+                                </template>
                             </div>
                         </div>
+
                     </div>
-                </template>ate>
+                </div>
+                </template>
 
                 <!-- Recent Transactions (Moved to Left Column) -->
                 <div
@@ -1045,6 +1138,10 @@
                 has_mp3_module: serverData.has_mp3_module || false,
                 mp3Playing: false,
                 mp3Volume: 25,
+                currentPlayingTrack: null,
+                mp3Loop: false,
+                mp3LoopTrack: null,
+                get isDark() { return document.documentElement.classList.contains('dark'); },
 
                 init() {
                     console.log('Alpine Init - Machine ID:', this.machine_id);
@@ -1100,16 +1197,38 @@
                                 if (data.is_connected !== undefined) this.connected = data.is_connected;
                                 if (data.last_heartbeat) this.lastHeartbeat = new Date(data.last_heartbeat).toLocaleString();
 
-                                if (data.is_running_sequence === true && this.runningSequence === false) {
-                                    this.showToast('Sanitization Process Started');
+                                if (data.is_running_sequence !== undefined) {
+                                    const wasRunning = this.runningSequence;
+                                    const nowRunning = !!data.is_running_sequence;
+
+                                    if (!wasRunning && nowRunning) {
+                                        // Sequence just STARTED — stop loop music so it doesn't play during sequence
+                                        this.showToast('Sanitization Process Started');
+                                        if (this.mp3Loop && this.has_mp3_module && this.socket) {
+                                            this.socket.emit('play_mp3', { action: 'stop' });
+                                            this.mp3Playing = false;
+                                        }
+                                    } else if (wasRunning && !nowRunning) {
+                                        // Sequence just ENDED — resume loop track if loop is still on
+                                        if (this.mp3Loop && this.mp3LoopTrack && this.has_mp3_module && this.socket) {
+                                            setTimeout(() => {
+                                                if (this.mp3Loop && this.mp3LoopTrack && this.socket) {
+                                                    this.socket.emit('play_mp3', { action: 'loop_on', track: this.mp3LoopTrack });
+                                                    this.currentPlayingTrack = this.mp3LoopTrack;
+                                                    this.mp3Playing = true;
+                                                    this.showToast(`🔁 Resuming Loop: Track ${this.mp3LoopTrack < 10 ? '0' + this.mp3LoopTrack : this.mp3LoopTrack}.mp3`);
+                                                }
+                                            }, 1500);
+                                        }
+                                    }
+
+                                    this.runningSequence = nowRunning;
                                 }
 
                                 if (data.new_transaction) {
                                     this.transactions.unshift(data.new_transaction);
                                     if (this.transactions.length > 5) this.transactions.pop();
                                 }
-
-                                if (data.is_running_sequence !== undefined) this.runningSequence = !!data.is_running_sequence;
 
                                 // Enhanced Step Tracking
                                 if (data.current_step) {
@@ -1289,11 +1408,19 @@
                     if (track) {
                         this.socket.emit('play_mp3', { action: 'play', track: parseInt(track) });
                         this.mp3Playing = true;
+                        this.currentPlayingTrack = parseInt(track);
                         this.showToast(`🎵 Playing Track ${track < 10 ? '0' + track : track}.mp3`);
                     } else {
-                        this.socket.emit('play_mp3', { action: 'play' });
+                        // Play / Resume
+                        if (this.currentPlayingTrack === null) {
+                            this.currentPlayingTrack = 1;
+                            this.socket.emit('play_mp3', { action: 'play', track: 1 });
+                            this.showToast(`🎵 Playing Track 01.mp3`);
+                        } else {
+                            this.socket.emit('play_mp3', { action: 'play' });
+                            this.showToast(`▶ Resumed Playback`);
+                        }
                         this.mp3Playing = true;
-                        this.showToast(`▶ Resumed Playback`);
                     }
                 },
 
@@ -1308,24 +1435,57 @@
                     if (!this.connected || !this.socket) return;
                     this.socket.emit('play_mp3', { action: 'stop' });
                     this.mp3Playing = false;
+                    this.currentPlayingTrack = null;
                     this.showToast('⏹ Audio Stopped');
                 },
 
                 nextMP3() {
                     if (!this.connected || !this.socket) return;
-                    this.socket.emit('play_mp3', { action: 'next' });
-                    this.showToast('⏭ Next Track');
+                    if (this.currentPlayingTrack !== null) {
+                        this.currentPlayingTrack = (this.currentPlayingTrack % 10) + 1;
+                    } else {
+                        this.currentPlayingTrack = 1;
+                    }
+                    this.socket.emit('play_mp3', { action: 'play', track: this.currentPlayingTrack });
+                    this.mp3Playing = true;
+                    this.showToast(`⏭ Next Track: Track ${this.currentPlayingTrack < 10 ? '0' + this.currentPlayingTrack : this.currentPlayingTrack}`);
                 },
 
                 prevMP3() {
                     if (!this.connected || !this.socket) return;
-                    this.socket.emit('play_mp3', { action: 'prev' });
-                    this.showToast('⏮ Previous Track');
+                    if (this.currentPlayingTrack !== null) {
+                        this.currentPlayingTrack = this.currentPlayingTrack - 1;
+                        if (this.currentPlayingTrack < 1) this.currentPlayingTrack = 10;
+                    } else {
+                        this.currentPlayingTrack = 1;
+                    }
+                    this.socket.emit('play_mp3', { action: 'play', track: this.currentPlayingTrack });
+                    this.mp3Playing = true;
+                    this.showToast(`⏮ Previous Track: Track ${this.currentPlayingTrack < 10 ? '0' + this.currentPlayingTrack : this.currentPlayingTrack}`);
                 },
 
                 setVolumeMP3(vol) {
                     if (!this.connected || !this.socket) return;
                     this.socket.emit('play_mp3', { action: 'volume', volume: parseInt(vol) });
+                },
+
+                setLoopMP3(enabled) {
+                    if (!this.connected || !this.socket) return;
+                    if (enabled) {
+                        // Store whichever track is currently playing; fall back to Track 01
+                        const loopTrack = this.currentPlayingTrack || 1;
+                        this.mp3LoopTrack = loopTrack;
+                        this.currentPlayingTrack = loopTrack;
+                        this.mp3Playing = true;
+                        // Send loop_on with the track — firmware will repeat-single this track
+                        this.socket.emit('play_mp3', { action: 'loop_on', track: loopTrack });
+                        const label = loopTrack < 10 ? '0' + loopTrack : loopTrack;
+                        this.showToast(`🔁 Looping Track ${label}.mp3`);
+                    } else {
+                        this.mp3LoopTrack = null;
+                        this.socket.emit('play_mp3', { action: 'loop_off' });
+                        this.showToast('Loop Off');
+                    }
                 },
 
 

@@ -519,6 +519,18 @@ void onPlayMP3(const char * payload, size_t length) {
             int vol = doc["volume"] | 25;
             mp3SetVolume(vol);
         }
+        else if (action == "loop_on") {
+            int track = doc["track"] | 1;
+            logPrint("🔁 MP3 Loop ON — Track: " + String(track));
+            mp3Play(track);                           // start the track first
+            delay(200);
+            sendMP3Command(0x08, 0x00, track);        // 0x08 = loop single track
+        }
+        else if (action == "loop_off") {
+            logPrint("➡ MP3 Loop OFF");
+            sendMP3Command(0x0E, 0x00, 0x00);         // pause (keeps position)
+            sendMP3Command(0x11, 0x00, 0x00);         // disable repeat-all just in case
+        }
     }
     #endif
 }
