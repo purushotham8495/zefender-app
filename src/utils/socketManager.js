@@ -91,8 +91,16 @@ function init(server) {
         socket.on('play_mp3', (data) => {
             const machine_id = socket.web_machine_id;
             if (!machine_id) return;
-            const sent = sendCommand(machine_id, 'play_mp3', typeof data === 'string' ? data : JSON.stringify(data));
-            console.error(`[SOCKET] 🎵 play_mp3 relay to ${machine_id}: track=${JSON.parse(typeof data === 'string' ? data : JSON.stringify(data)).track}, sent=${sent}`);
+            let payload = data;
+            if (typeof data === 'string') {
+                try {
+                    payload = JSON.parse(data);
+                } catch (e) {
+                    console.error('[SOCKET] Failed to parse play_mp3 data:', data, e);
+                }
+            }
+            const sent = sendCommand(machine_id, 'play_mp3', payload);
+            console.error(`[SOCKET] 🎵 play_mp3 relay to ${machine_id}:`, payload, `sent=${sent}`);
         });
 
 

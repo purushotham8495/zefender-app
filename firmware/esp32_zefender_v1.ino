@@ -475,14 +475,49 @@ void onOTAUpdate(const char * payload, size_t length) {
 
 void onPlayMP3(const char * payload, size_t length) {
     #if HAS_MP3_MODULE
-    DynamicJsonDocument doc(256);
+    DynamicJsonDocument doc(512);
     deserializeJson(doc, payload);
-    if (doc.containsKey("track")) {
+    
+    // Check if payload has direct track parameter (legacy/direct calls)
+    if (doc.containsKey("track") && !doc.containsKey("action")) {
         int track = doc["track"] | 0;
         if (track > 0) {
             mp3Play(track);
         } else {
             mp3Stop();
+        }
+        return;
+    }
+
+    if (doc.containsKey("action")) {
+        String action = doc["action"];
+        if (action == "play") {
+            if (doc.containsKey("track")) {
+                int track = doc["track"] | 1;
+                mp3Play(track);
+            } else {
+                logPrint("🎵 MP3 Resume");
+                sendMP3Command(0x0D, 0x00, 0x00);
+            }
+        }
+        else if (action == "pause") {
+            logPrint("⏸ MP3 Pause");
+            sendMP3Command(0x0E, 0x00, 0x00);
+        }
+        else if (action == "stop") {
+            mp3Stop();
+        }
+        else if (action == "next") {
+            logPrint("⏭ MP3 Next track");
+            sendMP3Command(0x01, 0x00, 0x00);
+        }
+        else if (action == "prev") {
+            logPrint("⏮ MP3 Previous track");
+            sendMP3Command(0x02, 0x00, 0x00);
+        }
+        else if (action == "volume") {
+            int vol = doc["volume"] | 25;
+            mp3SetVolume(vol);
         }
     }
     #endif

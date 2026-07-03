@@ -247,48 +247,105 @@
 
                 <!-- Audio Control Panel (MP3 Module — shown only when has_mp3_module is true) -->
                 <template x-if="has_mp3_module">
-                    <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-violet-300 dark:border-violet-700/50 p-6 shadow-xl mb-4 relative overflow-hidden">
-                        <!-- Background glow -->
-                        <div class="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent pointer-events-none"></div>
-                        <div class="relative z-10">
-                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-5">
-                                <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-                                </svg>
-                                Audio Control
-                                <span class="ml-auto text-[9px] px-2 py-0.5 rounded-full border font-bold"
+                    <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-violet-300/60 dark:border-violet-700/50 p-6 shadow-xl mb-4 relative overflow-hidden">
+                        <!-- Background gradient/glow -->
+                        <div class="absolute inset-0 bg-gradient-to-br from-violet-500/[0.03] to-transparent pointer-events-none"></div>
+                        <div class="relative z-10 space-y-5">
+                            <!-- Header -->
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                                    </svg>
+                                    Audio Control
+                                </h3>
+                                <span class="text-[9px] px-2.5 py-0.5 rounded-full border font-bold uppercase tracking-widest"
                                     :class="mp3Playing ? 'bg-violet-500/20 text-violet-400 border-violet-500/30 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-300 dark:border-slate-700'">
-                                    <span x-text="mp3Playing ? '♫ PLAYING' : 'IDLE'"></span>
+                                    <span x-text="mp3Playing ? 'PLAYING' : 'PAUSED/IDLE'"></span>
                                 </span>
-                            </h3>
-                            <div class="grid grid-cols-3 gap-2">
-                                <button @click="playMP3(1)" :disabled="!connected"
-                                    class="flex flex-col items-center justify-center gap-1.5 p-4 bg-violet-600/10 hover:bg-violet-600 border border-violet-500/30 hover:border-violet-500 text-violet-400 hover:text-white rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed group">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                            </div>
+
+                            <!-- Media Controls Container -->
+                            <div class="bg-slate-50 dark:bg-[#0f172a]/60 rounded-xl p-3 border border-slate-200 dark:border-slate-800 flex items-center justify-around">
+                                <!-- Prev Button -->
+                                <button @click="prevMP3()" :disabled="!connected"
+                                    class="p-2.5 text-slate-500 hover:text-violet-500 dark:text-slate-400 dark:hover:text-violet-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-90 disabled:opacity-40"
+                                    title="Previous Track">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M8.445 14.83a1 1 0 001.555-.832V10.75l4.445 4.08a1 1 0 001.555-.832V6a1 1 0 00-1.555-.832L10 9.25V6.83a1 1 0 00-1.555-.832l-6 5.5a1 1 0 000 1.664l6 5.5z"/>
                                     </svg>
-                                    <span class="text-[10px] font-black uppercase tracking-widest">01.mp3</span>
                                 </button>
-                                <button @click="playMP3(2)" :disabled="!connected"
-                                    class="flex flex-col items-center justify-center gap-1.5 p-4 bg-violet-600/10 hover:bg-violet-600 border border-violet-500/30 hover:border-violet-500 text-violet-400 hover:text-white rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed group">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+
+                                <!-- Play/Resume Button -->
+                                <button @click="playMP3()" :disabled="!connected"
+                                    class="p-3 bg-violet-600 hover:bg-violet-500 text-white rounded-full shadow-lg shadow-violet-500/20 transition-all active:scale-90 disabled:opacity-40"
+                                    title="Play / Resume">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
                                     </svg>
-                                    <span class="text-[10px] font-black uppercase tracking-widest">02.mp3</span>
                                 </button>
+
+                                <!-- Pause Button -->
+                                <button @click="pauseMP3()" :disabled="!connected"
+                                    class="p-3 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full transition-all active:scale-90 disabled:opacity-40"
+                                    title="Pause">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Stop Button -->
                                 <button @click="stopMP3()" :disabled="!connected"
-                                    class="flex flex-col items-center justify-center gap-1.5 p-4 bg-red-500/10 hover:bg-red-500 border border-red-500/30 hover:border-red-500 text-red-400 hover:text-white rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                                    class="p-2.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg border border-red-500/20 transition-all active:scale-90 disabled:opacity-40"
+                                    title="Stop Playback">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <rect x="5" y="5" width="10" height="10" rx="1.5" />
                                     </svg>
-                                    <span class="text-[10px] font-black uppercase tracking-widest">Stop</span>
                                 </button>
+
+                                <!-- Next Button -->
+                                <button @click="nextMP3()" :disabled="!connected"
+                                    class="p-2.5 text-slate-500 hover:text-violet-500 dark:text-slate-400 dark:hover:text-violet-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-90 disabled:opacity-40"
+                                    title="Next Track">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L9 10.75v2.418a1 1 0 001.555.832l6-5.5a1 1 0 000-1.664l-6-5.5A1 1 0 009 3.83v2.418L4.555 5.168z"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Volume Slider -->
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between items-center text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"/>
+                                        </svg>
+                                        Volume
+                                    </span>
+                                    <span x-text="mp3Volume + ' / 30'"></span>
+                                </div>
+                                <input type="range" min="0" max="30" x-model.number="mp3Volume" @input="setVolumeMP3(mp3Volume)" :disabled="!connected"
+                                    class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-violet-600 focus:outline-none disabled:opacity-40">
+                            </div>
+
+                            <!-- Quick Play Tracks -->
+                            <div class="space-y-1.5">
+                                <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Quick Tracks</span>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button @click="playMP3(1)" :disabled="!connected"
+                                        class="py-2 px-3 bg-violet-600/5 hover:bg-violet-600/10 text-violet-400 hover:text-violet-300 text-xs font-bold rounded-lg border border-violet-500/10 hover:border-violet-500/30 transition-all flex items-center justify-center gap-1.5">
+                                        <span class="text-[10px]">♫</span> Track 01
+                                    </button>
+                                    <button @click="playMP3(2)" :disabled="!connected"
+                                        class="py-2 px-3 bg-violet-600/5 hover:bg-violet-600/10 text-violet-400 hover:text-violet-300 text-xs font-bold rounded-lg border border-violet-500/10 hover:border-violet-500/30 transition-all flex items-center justify-center gap-1.5">
+                                        <span class="text-[10px]">♫</span> Track 02
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </template>
+                </template>ate>
 
                 <!-- Recent Transactions (Moved to Left Column) -->
                 <div
@@ -987,6 +1044,7 @@
                 showLogs: true,
                 has_mp3_module: serverData.has_mp3_module || false,
                 mp3Playing: false,
+                mp3Volume: 25,
 
                 init() {
                     console.log('Alpine Init - Machine ID:', this.machine_id);
@@ -1224,21 +1282,50 @@
                     } catch (err) { console.error(err); }
                 },
 
-                playMP3(track) {
+                playMP3(track = null) {
                     if (!this.connected || !this.socket) {
                         alert('Machine is offline'); return;
                     }
-                    this.socket.emit('play_mp3', JSON.stringify({ track }));
-                    this.mp3Playing = true;
-                    this.showToast(`🎵 Playing Track ${track < 10 ? '0' + track : track}.mp3`);
+                    if (track) {
+                        this.socket.emit('play_mp3', { action: 'play', track: parseInt(track) });
+                        this.mp3Playing = true;
+                        this.showToast(`🎵 Playing Track ${track < 10 ? '0' + track : track}.mp3`);
+                    } else {
+                        this.socket.emit('play_mp3', { action: 'play' });
+                        this.mp3Playing = true;
+                        this.showToast(`▶ Resumed Playback`);
+                    }
+                },
+
+                pauseMP3() {
+                    if (!this.connected || !this.socket) return;
+                    this.socket.emit('play_mp3', { action: 'pause' });
+                    this.mp3Playing = false;
+                    this.showToast('⏸ Paused');
                 },
 
                 stopMP3() {
                     if (!this.connected || !this.socket) return;
-                    // Track 0 = stop on DFPlayer
-                    this.socket.emit('play_mp3', JSON.stringify({ track: 0, stop: true }));
+                    this.socket.emit('play_mp3', { action: 'stop' });
                     this.mp3Playing = false;
                     this.showToast('⏹ Audio Stopped');
+                },
+
+                nextMP3() {
+                    if (!this.connected || !this.socket) return;
+                    this.socket.emit('play_mp3', { action: 'next' });
+                    this.showToast('⏭ Next Track');
+                },
+
+                prevMP3() {
+                    if (!this.connected || !this.socket) return;
+                    this.socket.emit('play_mp3', { action: 'prev' });
+                    this.showToast('⏮ Previous Track');
+                },
+
+                setVolumeMP3(vol) {
+                    if (!this.connected || !this.socket) return;
+                    this.socket.emit('play_mp3', { action: 'volume', volume: parseInt(vol) });
                 },
 
 
