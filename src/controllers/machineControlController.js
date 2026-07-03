@@ -139,6 +139,7 @@ exports.controlCenter = async (req, res) => {
             gpios: machinePlain.gpios || [],
             sequences: machinePlain.sequences || [],
             transactions: recentTransactions || [],
+            has_mp3_module: !!machinePlain.has_mp3_module,
             recentLogs: recentLogs.map(l => ({
                 time: l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : '',
                 message: l.description || ''
@@ -315,11 +316,13 @@ exports.updateSequenceConfig = async (req, res) => {
         const stepsToCreate = sequences.map((s, index) => ({
             machine_id,
             step_index: index + 1,
-            // For global actions, pin_number is irrelevant (null). Otherwise, parse it.
-            pin_number: (s.action === 'ALL_ON' || s.action === 'ALL_OFF') ? null : (parseInt(s.pin_number) || 0),
+            // For global actions, pin_number is irrelevant (null).
+            // For PLAY_TRACK, pin_number is null and track_number carries the value.
+            pin_number: (s.action === 'ALL_ON' || s.action === 'ALL_OFF' || s.action === 'PLAY_TRACK') ? null : (parseInt(s.pin_number) || 0),
             action: s.action,
             duration_ms: parseInt(s.duration_ms) || 0,
-            description: s.description
+            description: s.description,
+            track_number: s.action === 'PLAY_TRACK' ? (parseInt(s.track_number) || 1) : null
         }));
 
         // Log the first item to verify structure

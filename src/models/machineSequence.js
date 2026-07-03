@@ -24,7 +24,7 @@ const MachineSequence = sequelize.define('MachineSequence', {
         allowNull: true // Allow null for global actions like ALL_ON/ALL_OFF
     },
     action: {
-        type: DataTypes.ENUM('ON', 'OFF', 'ALL_ON', 'ALL_OFF'),
+        type: DataTypes.ENUM('ON', 'OFF', 'ALL_ON', 'ALL_OFF', 'PLAY_TRACK'),
         allowNull: false
     },
     duration_ms: {
@@ -35,6 +35,11 @@ const MachineSequence = sequelize.define('MachineSequence', {
     description: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    track_number: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // Only used when action = PLAY_TRACK
+        defaultValue: null
     }
 }, {
     tableName: 'machine_sequences',

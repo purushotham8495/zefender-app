@@ -296,6 +296,17 @@
                                                     <option value="inactive">Inactive (Offline)</option>
                                                 </select>
                                             </div>
+                                            <!-- MP3 Module Toggle -->
+                                            <div class="flex items-center justify-between p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-200 dark:border-violet-700/40">
+                                                <div>
+                                                    <p class="text-sm font-bold text-slate-800 dark:text-white">🎵 MP3 Audio Module</p>
+                                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">GPIO 16 & 17 reserved for DFPlayer Mini UART (not relays)</p>
+                                                </div>
+                                                <label class="relative inline-flex items-center cursor-pointer ml-4">
+                                                    <input type="checkbox" name="has_mp3_module" id="machineMP3Input" class="sr-only peer">
+                                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -353,6 +364,7 @@
                             document.getElementById('machineCostInput').value = machine.cleaning_cost || '';
                             document.getElementById('machineOwnerInput').value = machine.owner_id || '';
                             document.getElementById('machineStatusInput').value = machine.status || 'active';
+                            document.getElementById('machineMP3Input').checked = !!machine.has_mp3_module;
                             statusWrapper.style.display = '';
                         } else {
                             title.textContent = 'Deploy Machine';
@@ -363,6 +375,7 @@
                             document.getElementById('machineLocationInput').value = '';
                             document.getElementById('machineCostInput').value = '';
                             document.getElementById('machineOwnerInput').value = '';
+                            document.getElementById('machineMP3Input').checked = false;
                             statusWrapper.style.display = 'none';
                         }
 

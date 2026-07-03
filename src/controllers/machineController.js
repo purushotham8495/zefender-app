@@ -53,6 +53,8 @@ exports.list = async (req, res) => {
 
 exports.create = async (req, res) => {
     try {
+        // HTML checkbox sends 'on' when checked, or is absent (undefined) when unchecked
+        req.body.has_mp3_module = req.body.has_mp3_module === 'on';
         await Machine.create(req.body);
         res.redirect('/machines');
     } catch (error) {
@@ -74,6 +76,8 @@ exports.edit = async (req, res) => {
     try {
         // If owner_id is empty string, set it to null
         if (req.body.owner_id === '') req.body.owner_id = null;
+        // HTML checkbox sends 'on' when checked, or is absent when unchecked
+        req.body.has_mp3_module = req.body.has_mp3_module === 'on';
 
         await Machine.update(req.body, { where: { id: req.params.id } });
         res.redirect('/machines');

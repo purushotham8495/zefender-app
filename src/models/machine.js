@@ -51,6 +51,12 @@ const Machine = sequelize.define('Machine', {
     network_info: {
         type: DataTypes.JSON, // To store { ssid: "...", rssi: -60 }
         allowNull: true
+    },
+    has_mp3_module: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+        comment: 'If true, GPIO 16/17 are reserved for DFPlayer Mini UART instead of relays'
     }
 }, {
     tableName: 'machines',

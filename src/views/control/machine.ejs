@@ -245,6 +245,51 @@
                     </div>
                 </button>
 
+                <!-- Audio Control Panel (MP3 Module — shown only when has_mp3_module is true) -->
+                <template x-if="has_mp3_module">
+                    <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-violet-300 dark:border-violet-700/50 p-6 shadow-xl mb-4 relative overflow-hidden">
+                        <!-- Background glow -->
+                        <div class="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent pointer-events-none"></div>
+                        <div class="relative z-10">
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-5">
+                                <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                                </svg>
+                                Audio Control
+                                <span class="ml-auto text-[9px] px-2 py-0.5 rounded-full border font-bold"
+                                    :class="mp3Playing ? 'bg-violet-500/20 text-violet-400 border-violet-500/30 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-300 dark:border-slate-700'">
+                                    <span x-text="mp3Playing ? '♫ PLAYING' : 'IDLE'"></span>
+                                </span>
+                            </h3>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button @click="playMP3(1)" :disabled="!connected"
+                                    class="flex flex-col items-center justify-center gap-1.5 p-4 bg-violet-600/10 hover:bg-violet-600 border border-violet-500/30 hover:border-violet-500 text-violet-400 hover:text-white rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed group">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                                    </svg>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">01.mp3</span>
+                                </button>
+                                <button @click="playMP3(2)" :disabled="!connected"
+                                    class="flex flex-col items-center justify-center gap-1.5 p-4 bg-violet-600/10 hover:bg-violet-600 border border-violet-500/30 hover:border-violet-500 text-violet-400 hover:text-white rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed group">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                                    </svg>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">02.mp3</span>
+                                </button>
+                                <button @click="stopMP3()" :disabled="!connected"
+                                    class="flex flex-col items-center justify-center gap-1.5 p-4 bg-red-500/10 hover:bg-red-500 border border-red-500/30 hover:border-red-500 text-red-400 hover:text-white rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                                    </svg>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Stop</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
                 <!-- Recent Transactions (Moved to Left Column) -->
                 <div
                     class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-300 dark:border-slate-700/50 p-6 shadow-xl mb-6">
@@ -326,9 +371,10 @@
                         <!-- Sequence Card (Simulated as one for now, but looping existing mock) -->
                         <template x-for="(seq, index) in sequences" :key="index">
                             <div
-                                class="bg-slate-50 dark:bg-[#0f172a]/50 rounded-xl p-4 border border-slate-300 dark:border-slate-700/50 hover:border-slate-400 dark:hover:border-slate-600 transition-colors flex justify-between items-center">
+                                class="bg-slate-50 dark:bg-[#0f172a]/50 rounded-xl p-4 border border-slate-300 dark:border-slate-700/50 hover:border-slate-400 dark:hover:border-slate-600 transition-colors flex justify-between items-center"
+                                :class="seq.action === 'PLAY_TRACK' ? 'border-violet-500/20 dark:border-violet-500/10' : ''">
                                 <div>
-                                    <h4 class="font-bold text-slate-700 dark:text-slate-200"
+                                    <h4 class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5"
                                         x-text="seq.description || 'Step ' + seq.step_index"></h4>
                                     <div class="flex items-center gap-4 mt-2">
                                         <span class="text-xs text-slate-500"
@@ -336,10 +382,11 @@
                                         <span
                                             class="text-[10px] px-2 py-0.5 rounded font-black border uppercase tracking-widest transition-colors"
                                             :class="{
-                                                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': seq.action.includes('ON') || seq.action.includes('RUN'),
+                                                'bg-violet-500/10 text-violet-400 border-violet-500/20': seq.action === 'PLAY_TRACK',
+                                                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': (seq.action.includes('ON') || seq.action.includes('RUN')) && seq.action !== 'PLAY_TRACK',
                                                 'bg-red-500/10 text-red-400 border-red-500/20': seq.action.includes('OFF') || seq.action.includes('STOP'),
-                                                'bg-slate-800 text-slate-400 border-slate-700': !seq.action.includes('ON') && !seq.action.includes('OFF')
-                                            }" x-text="seq.action"></span>
+                                                'bg-slate-800 text-slate-400 border-slate-700': !seq.action.includes('ON') && !seq.action.includes('OFF') && seq.action !== 'PLAY_TRACK'
+                                            }" x-text="seq.action === 'PLAY_TRACK' ? '🎵 PLAY TRACK ' + (seq.track_number || 1) : seq.action"></span>
                                     </div>
                                 </div>
                             </div>
@@ -710,10 +757,9 @@
                             </div>
 
                             <div class="grid grid-cols-3 gap-4">
-                                <div class="space-y-1">
-                                    <label
-                                        class="text-[9px] text-slate-500 uppercase font-black tracking-tighter ml-1">Pin
-                                        Assignment</label>
+                                <!-- Pin Assignment (hidden when PLAY_TRACK) -->
+                                <div class="space-y-1" x-show="s.action !== 'PLAY_TRACK'">
+                                    <label class="text-[9px] text-slate-500 uppercase font-black tracking-tighter ml-1">Pin Assignment</label>
                                     <select x-model="s.pin_number"
                                         class="w-full bg-[#0f172a] border border-slate-700/50 rounded-lg px-2 py-1.5 text-white text-xs font-bold outline-none focus:border-indigo-500 transition-all">
                                         <option value="-1" class="font-bold text-indigo-400">★ ALL PINS (GLOBAL)</option>
@@ -726,10 +772,22 @@
                                     </select>
                                 </div>
 
+                                <!-- Track Selector (shown only when PLAY_TRACK) -->
+                                <div class="space-y-1" x-show="s.action === 'PLAY_TRACK'">
+                                    <label class="text-[9px] text-violet-400 uppercase font-black tracking-tighter ml-1">🎵 Track</label>
+                                    <select x-model.number="s.track_number"
+                                        class="w-full bg-violet-900/30 border border-violet-700/50 rounded-lg px-2 py-1.5 text-violet-300 text-xs font-bold outline-none focus:border-violet-500 transition-all">
+                                        <option value="1">01.mp3</option>
+                                        <option value="2">02.mp3</option>
+                                        <option value="3">03.mp3</option>
+                                        <option value="4">04.mp3</option>
+                                        <option value="5">05.mp3</option>
+                                    </select>
+                                </div>
+
+                                <!-- Logic State -->
                                 <div class="space-y-1">
-                                    <label
-                                        class="text-[9px] text-slate-500 uppercase font-black tracking-tighter ml-1">Logic
-                                        State</label>
+                                    <label class="text-[9px] text-slate-500 uppercase font-black tracking-tighter ml-1">Action</label>
                                     <div class="flex bg-[#0f172a] rounded-lg p-0.5 border border-slate-700/50 h-[30px]">
                                         <button @click="s.action = 'ON'"
                                             class="flex-1 text-[10px] font-black rounded transition-all"
@@ -737,13 +795,16 @@
                                         <button @click="s.action = 'OFF'"
                                             class="flex-1 text-[10px] font-black rounded transition-all"
                                             :class="s.action === 'OFF' ? 'bg-red-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'">OFF</button>
+                                        <template x-if="has_mp3_module">
+                                            <button @click="s.action = 'PLAY_TRACK'; s.track_number = s.track_number || 1; s.pin_number = '-1'"
+                                                class="flex-1 text-[9px] font-black rounded transition-all"
+                                                :class="s.action === 'PLAY_TRACK' ? 'bg-violet-500 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'">🎵</button>
+                                        </template>
                                     </div>
                                 </div>
 
                                 <div class="space-y-1">
-                                    <label
-                                        class="text-[9px] text-slate-500 uppercase font-black tracking-tighter ml-1">Duration
-                                        (MS)</label>
+                                    <label class="text-[9px] text-slate-500 uppercase font-black tracking-tighter ml-1">Duration (MS)</label>
                                     <input type="number" x-model.number="s.duration_ms" step="500" placeholder="1000"
                                         class="w-full bg-white dark:bg-[#0f172a] border border-slate-300 dark:border-slate-700/50 rounded-lg px-2 py-1.5 text-slate-800 dark:text-white text-xs font-bold outline-none focus:border-amber-500 transition-all">
                                 </div>
@@ -751,15 +812,24 @@
                         </div>
                     </template>
 
-                    <button
-                        @click="editedSequences.push({ pin_number: gpios[0]?.pin_number || 4, action: 'ON', duration_ms: 1000, step_index: editedSequences.length + 1 })"
-                        class="w-full py-2 bg-emerald-500/10 border border-dashed border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        APPEND NEW STEP
-                    </button>
+                    <div class="flex gap-2">
+                        <button
+                            @click="editedSequences.push({ pin_number: String(gpios[0]?.pin_number || 4), action: 'ON', duration_ms: 1000, step_index: editedSequences.length + 1 })"
+                            class="flex-1 py-2 bg-emerald-500/10 border border-dashed border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            ADD STEP
+                        </button>
+                        <template x-if="has_mp3_module">
+                            <button
+                                @click="editedSequences.push({ pin_number: '-1', action: 'PLAY_TRACK', track_number: 1, duration_ms: 5000, step_index: editedSequences.length + 1 })"
+                                class="flex-1 py-2 bg-violet-500/10 border border-dashed border-violet-500/30 hover:bg-violet-500/20 text-violet-400 hover:text-violet-300 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2">
+                                🎵 ADD AUDIO STEP
+                            </button>
+                        </template>
+                    </div>
                 </div>
 
                 <div
@@ -915,6 +985,8 @@
                 otaFile: null,
                 machineLogs: serverData.recentLogs || [],
                 showLogs: true,
+                has_mp3_module: serverData.has_mp3_module || false,
+                mp3Playing: false,
 
                 init() {
                     console.log('Alpine Init - Machine ID:', this.machine_id);
@@ -1152,6 +1224,24 @@
                     } catch (err) { console.error(err); }
                 },
 
+                playMP3(track) {
+                    if (!this.connected || !this.socket) {
+                        alert('Machine is offline'); return;
+                    }
+                    this.socket.emit('play_mp3', JSON.stringify({ track }));
+                    this.mp3Playing = true;
+                    this.showToast(`🎵 Playing Track ${track < 10 ? '0' + track : track}.mp3`);
+                },
+
+                stopMP3() {
+                    if (!this.connected || !this.socket) return;
+                    // Track 0 = stop on DFPlayer
+                    this.socket.emit('play_mp3', JSON.stringify({ track: 0, stop: true }));
+                    this.mp3Playing = false;
+                    this.showToast('⏹ Audio Stopped');
+                },
+
+
                 openConfigModal() {
                     this.editedGpios = JSON.parse(JSON.stringify(this.gpios));
                     this.gpioModalOpen = true;
@@ -1175,6 +1265,11 @@
 
                 openSequenceModal() {
                     this.editedSequences = JSON.parse(JSON.stringify(this.sequences)).map(s => {
+                        // PLAY_TRACK steps — preserve as-is, ensure track_number is set
+                        if (s.action === 'PLAY_TRACK') {
+                            return { ...s, pin_number: '-1', track_number: s.track_number || 1 };
+                        }
+
                         // Map Backend Global Actions to Frontend UI (Pin -1)
                         // Store pin_number as string so x-model matches <option value> strings
                         if (s.action === 'ALL_ON') return { ...s, pin_number: '-1', action: 'ON' };
@@ -1192,10 +1287,21 @@
                 },
 
                 async saveSequenceConfig() {
-                    // 1. Prepare Payload (Map Frontend -1 back to Backend Global Actions)
+                    // 1. Prepare Payload
                     // parseInt because x-model on <select> stores values as strings
                     const payload = this.editedSequences.map(s => {
+                        // PLAY_TRACK — pass through with track_number, no pin needed
+                        if (s.action === 'PLAY_TRACK') {
+                            return {
+                                ...s,
+                                pin_number: null,
+                                action: 'PLAY_TRACK',
+                                track_number: parseInt(s.track_number) || 1
+                            };
+                        }
+
                         const pin = parseInt(s.pin_number);
+                        // Map ALL_ON/ALL_OFF (pin=-1) back to backend actions
                         if (pin === -1) {
                             return {
                                 ...s,
@@ -1203,12 +1309,12 @@
                                 action: s.action === 'ON' ? 'ALL_ON' : 'ALL_OFF'
                             };
                         }
-                        return { ...s, pin_number: pin };
+                        return { ...s, pin_number: pin, track_number: null };
                     });
 
-                    // 2. Validation
+                    // 2. Validation — only check relay steps (not PLAY_TRACK or global actions)
                     const invalidStep = payload.find(s =>
-                        !['ALL_ON', 'ALL_OFF'].includes(s.action) &&
+                        !['ALL_ON', 'ALL_OFF', 'PLAY_TRACK'].includes(s.action) &&
                         (s.pin_number === null || isNaN(s.pin_number))
                     );
 

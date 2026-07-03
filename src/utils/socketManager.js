@@ -51,6 +51,7 @@ function init(server) {
             if (machine_id) {
                 if (client_type === 'web') {
                     socket.join(`machine_${machine_id}`);
+                    socket.web_machine_id = machine_id; // track which machine this web client controls
                     console.error(`[SOCKET] Web client joined room for: ${machine_id}`);
                 } else {
                     socket.machine_id = machine_id;
@@ -85,6 +86,15 @@ function init(server) {
                 }
             }
         });
+
+        // MP3 Play — web client → relay to machine
+        socket.on('play_mp3', (data) => {
+            const machine_id = socket.web_machine_id;
+            if (!machine_id) return;
+            const sent = sendCommand(machine_id, 'play_mp3', typeof data === 'string' ? data : JSON.stringify(data));
+            console.error(`[SOCKET] 🎵 play_mp3 relay to ${machine_id}: track=${JSON.parse(typeof data === 'string' ? data : JSON.stringify(data)).track}, sent=${sent}`);
+        });
+
 
         // 1. Logs from Machine -> Browser (DB + FILE + CONSOLE)
         socket.on('machine_log', async (data) => {

@@ -29,6 +29,9 @@
 #define STEP_PIN 26
 #define DIR_PIN 25
 
+// MP3 Module (DFPlayer Mini UART on Pins 16 RX & 17 TX)
+#define HAS_MP3_MODULE  true   // Set to true for machines with the MP3 module installed
+
 bool stepperRunning = false;
 unsigned long lastStepTime = 0;
 bool stepState = false;
@@ -65,6 +68,48 @@ WebServer server(80);
 
 // ====================== HELPER FUNCTIONS ======================
 
+// MP3 DFPlayer Mini Raw UART packet sender (No external library dependency)
+void sendMP3Command(uint8_t command, uint8_t para1, uint8_t para2) {
+    #if HAS_MP3_MODULE
+    uint16_t checksum = 0xFFFF - (0xFF + 0x06 + command + 0x00 + para1 + para2) + 1;
+    uint8_t packet[10] = {
+        0x7E, 
+        0xFF, 
+        0x06, 
+        command, 
+        0x00, // No feedback
+        para1, 
+        para2, 
+        (uint8_t)(checksum >> 8), 
+        (uint8_t)(checksum & 0xFF), 
+        0xEF
+    };
+    Serial2.write(packet, 10);
+    #endif
+}
+
+void mp3Play(int track) {
+    #if HAS_MP3_MODULE
+    logPrint("🎵 MP3 Play track " + String(track));
+    sendMP3Command(0x03, (track >> 8) & 0xFF, track & 0xFF);
+    #endif
+}
+
+void mp3Stop() {
+    #if HAS_MP3_MODULE
+    logPrint("⏹ MP3 Stop playback");
+    sendMP3Command(0x16, 0x00, 0x00);
+    #endif
+}
+
+void mp3SetVolume(int volume) {
+    #if HAS_MP3_MODULE
+    logPrint("🔊 MP3 Volume set to " + String(volume));
+    sendMP3Command(0x06, 0x00, volume & 0xFF);
+    #endif
+}
+
+
 // Log to Serial and Remote Server
 void logPrint(const String &msg) {
     Serial.println(msg);
@@ -89,6 +134,9 @@ void initDefaultPins() {
     pinConfigs.clear();
     int defaults[] = {2,4, 5, 15,16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33};
     for(int p : defaults) {
+        #if HAS_MP3_MODULE
+        if (p == 16 || p == 17) continue; // Skip serial pins
+        #endif
         pinConfigs.push_back({p, true}); // Default Active Low
     }
 }
@@ -112,6 +160,9 @@ bool pinIsActiveLow(int pin) {
 }
 
 void relayOn(int pin) {
+    #if HAS_MP3_MODULE
+    if (pin == 16 || pin == 17) return; // Prevent driving MP3 serial lines
+    #endif
 
     if(pin == STEP_PIN){
         stepperRunning = true;
@@ -133,6 +184,9 @@ void relayOn(int pin) {
 }
 
 void relayOff(int pin) {
+    #if HAS_MP3_MODULE
+    if (pin == 16 || pin == 17) return; // Prevent driving MP3 serial lines
+    #endif
 
     if(pin == STEP_PIN){
         stepperRunning = false;
@@ -168,7 +222,7 @@ void playMelodyBlocking(const int durations[], int length) {
 }
 
 // ====================== SEQUENCE ENGINE ======================
-enum StepAction { ACTION_ON, ACTION_OFF, ACTION_WAIT };
+enum StepAction { ACTION_ON, ACTION_OFF, ACTION_WAIT, ACTION_PLAY };
 
 struct SequenceStep {
     int stepIndex;
@@ -176,6 +230,7 @@ struct SequenceStep {
     StepAction action;
     unsigned long duration;
     String description;
+    int trackNum;
 };
 
 class SequenceEngine {
@@ -191,9 +246,11 @@ public:
             step.pin = s["pin_number"] | -1;
             step.duration = s["duration_ms"] | 0;
             step.description = s["description"] | "";
+            step.trackNum = s["track_number"] | 0;
             String act = s["action"] | "WAIT";
             if (act == "ON") step.action = ACTION_ON;
             else if (act == "OFF") step.action = ACTION_OFF;
+            else if (act == "PLAY_TRACK") step.action = ACTION_PLAY;
             else step.action = ACTION_WAIT;
             steps.push_back(step);
         }
@@ -216,6 +273,9 @@ public:
         for(const auto& s : steps) {
             if(s.pin > 0) relayOff(s.pin);
         }
+        #if HAS_MP3_MODULE
+        mp3Stop();
+        #endif
         logPrint("🛑 Sequence Stopped");
         if (isSocketConnected) socket.emit("sequence_complete", "{}");
     }
@@ -246,7 +306,11 @@ private:
 
     void executeStep(const SequenceStep& s) {
         logPrint("👉 Step " + String(s.stepIndex) + ": " + s.description);
-        if (s.pin > 0) {
+        if (s.action == ACTION_PLAY) {
+            #if HAS_MP3_MODULE
+            mp3Play(s.trackNum);
+            #endif
+        } else if (s.pin > 0) {
             if (s.action == ACTION_ON) relayOn(s.pin);
             else if (s.action == ACTION_OFF) relayOff(s.pin);
         }
@@ -409,6 +473,21 @@ void onOTAUpdate(const char * payload, size_t length) {
     }
 }
 
+void onPlayMP3(const char * payload, size_t length) {
+    #if HAS_MP3_MODULE
+    DynamicJsonDocument doc(256);
+    deserializeJson(doc, payload);
+    if (doc.containsKey("track")) {
+        int track = doc["track"] | 0;
+        if (track > 0) {
+            mp3Play(track);
+        } else {
+            mp3Stop();
+        }
+    }
+    #endif
+}
+
 // ====================== OTA WEB HANDLERS ======================
 const char* otaHTML = "<form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>";
 
@@ -439,6 +518,13 @@ void setup() {
     
     // NOTE: Hardware Watchdog removed to prevent boot loops/compilation errors.
     // relying on Software Watchdog in loop().
+
+    #if HAS_MP3_MODULE
+    Serial.println("🔊 Initializing DFPlayer Mini Serial2 (9600 baud, RX=16, TX=17)...");
+    Serial2.begin(9600, SERIAL_8N1, 16, 17);
+    delay(1000); // 1 second delay for DFPlayer Mini power-on stabilization
+    mp3SetVolume(25);
+    #endif
 
     initDefaultPins();
 
@@ -473,6 +559,7 @@ void setup() {
     socket.on("emergency_stop", onEmergencyStop);
     socket.on("reconnect_wifi", onReconnectWifi);
     socket.on("ota_update", onOTAUpdate);
+    socket.on("play_mp3", onPlayMP3);
 
     socket.begin(host, port, path);
     lastHeartbeat = millis(); 
