@@ -51,6 +51,7 @@ char path[] = "/socket.io/?transport=websocket"; // Force WebSocket for stabilit
 #define PIN_FAN       18
 #define PIN_UV        19
 #define BUZZER_PIN    23 
+#define BUTTON_PIN    3    // Physical push button on RX0 (GPIO 3)
 
 // Timing Constants
 const unsigned long HEARTBEAT_INTERVAL = 5000;
@@ -62,6 +63,12 @@ bool isRunningSequence = false;
 unsigned long lastHeartbeat = 0;
 bool isSocketConnected = false;
 unsigned long lastConnectionTime = 0;
+
+// Button Debounce and State variables
+bool lastButtonState = HIGH;
+bool currentButtonState = HIGH;
+unsigned long lastDebounceTime = 0;
+const unsigned long DEBOUNCE_DELAY = 50;
 
 SocketIoClient socket;
 WebServer server(80);
@@ -575,6 +582,8 @@ void setup() {
 
     initDefaultPins();
 
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
+
     pinMode(BUZZER_PIN, OUTPUT);
     relayOff(BUZZER_PIN);
     for(const auto& c : pinConfigs) {
@@ -618,6 +627,30 @@ void setup() {
 }
 
 void loop() {
+    // 0. PHYSICAL TRIGGER BUTTON: Check for physical push button press
+    int reading = digitalRead(BUTTON_PIN);
+    if (reading != lastButtonState) {
+        lastDebounceTime = millis();
+    }
+    if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
+        if (reading != currentButtonState) {
+            currentButtonState = reading;
+            if (currentButtonState == LOW) {
+                if (!engine.isBusy()) {
+                    logPrint("🔘 Physical Button Pressed: Requesting sequence start");
+                    if (isSocketConnected) {
+                        socket.emit("trigger_sequence", "{}");
+                    } else {
+                        logPrint("❌ Cannot trigger sequence: Socket not connected");
+                    }
+                } else {
+                    logPrint("⚠️ Sequence already running, button press ignored");
+                }
+            }
+        }
+    }
+    lastButtonState = reading;
+
     // 1. HARDWARE PRIORITY: Always Service Engine & Pulses FIRST
     // This ensures pumps/sequences never freeze even if WiFi dies
     rotateStepperBackground();

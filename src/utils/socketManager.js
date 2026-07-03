@@ -2,6 +2,7 @@ const socketIo = require('socket.io');
 const Machine = require('../models/machine');
 const MachineGPIO = require('../models/machineGPIO');
 const MachineLog = require('../models/machineLog');
+const MachineSequence = require('../models/machineSequence');
 
 let io;
 const connectedMachines = new Map(); // machine_id -> socket_id
@@ -156,6 +157,45 @@ function init(server) {
                     is_connected: true,
                     ...payload
                 });
+            }
+        });
+
+        // 3. Trigger Sequence from physical button press
+        socket.on('trigger_sequence', async () => {
+            if (socket.machine_id && socket.is_machine) {
+                const machine_id = socket.machine_id;
+                console.log(`[SOCKET] 📥 trigger_sequence requested by physical button on machine: ${machine_id}`);
+                try {
+                    const sequences = await MachineSequence.findAll({
+                        where: { machine_id },
+                        order: [['step_index', 'ASC']]
+                    });
+
+                    if (sequences && sequences.length > 0) {
+                        const success = sendCommand(machine_id, 'run_sequence', { steps: sequences });
+                        if (success) {
+                            await Machine.update({ is_running_sequence: true }, { where: { machine_id } });
+                            await MachineLog.create({
+                                machine_id,
+                                user_id: null,
+                                triggered_by: 'Physical Button',
+                                action_type: 'physical_trigger',
+                                description: 'Sequence triggered by physical push button',
+                                status: 'success',
+                                timestamp: new Date()
+                            });
+                            // Broadcast to web clients that the sequence started
+                            io.to(`machine_${machine_id}`).emit('machine_update', {
+                                machine_id,
+                                is_running_sequence: true
+                            });
+                        }
+                    } else {
+                        console.error(`[SOCKET] No sequence defined for machine: ${machine_id}`);
+                    }
+                } catch (err) {
+                    console.error('[SOCKET] Failed to trigger sequence from button:', err);
+                }
             }
         });
 
