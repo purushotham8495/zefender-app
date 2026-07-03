@@ -21,6 +21,33 @@
     } else {
       document.documentElement.classList.remove('dark');
     }
+
+    // Modal click propagation logger
+    document.addEventListener('mousedown', (e) => {
+      const modal = document.querySelector('[role="dialog"]');
+      if (modal) {
+        const modalBody = modal.querySelector('.bg-white, .dark\\:bg-slate-800');
+        console.log('[DEBUG-MOUSEDOWN]', {
+          target: e.target,
+          tagName: e.target.tagName,
+          classes: e.target.className,
+          isInsideModalBody: modalBody ? modalBody.contains(e.target) : false
+        });
+      }
+    }, true);
+
+    document.addEventListener('click', (e) => {
+      const modal = document.querySelector('[role="dialog"]');
+      if (modal) {
+        const modalBody = modal.querySelector('.bg-white, .dark\\:bg-slate-800');
+        console.log('[DEBUG-CLICK]', {
+          target: e.target,
+          tagName: e.target.tagName,
+          classes: e.target.className,
+          isInsideModalBody: modalBody ? modalBody.contains(e.target) : false
+        });
+      }
+    }, true);
   </script>
 </head>
 
@@ -140,7 +167,7 @@
 
           <!-- User Dropdown -->
           <% if (user) { %>
-            <div class="mt-2 text-white">
+            <div class="mt-2">
               <%- include('user_dropdown') %>
             </div>
             <% } %>

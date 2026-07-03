@@ -51,18 +51,6 @@ const Machine = sequelize.define('Machine', {
     network_info: {
         type: DataTypes.JSON, // To store { ssid: "...", rssi: -60 }
         allowNull: true
-    },
-    primary_sequence_id: {
-        type: DataTypes.STRING, // Can be 'DB_DEFAULT' or 'INTERNAL_CLEAN', etc.
-        defaultValue: 'DB_DEFAULT'
-    },
-    test_qr_url: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    actual_qr_url: {
-        type: DataTypes.STRING,
-        allowNull: true
     }
 }, {
     tableName: 'machines',

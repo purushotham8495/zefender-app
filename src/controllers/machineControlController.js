@@ -131,7 +131,6 @@ exports.controlCenter = async (req, res) => {
 
         // Prepare Frontend Data (Safe Injection)
         const frontendData = {
-            id: machinePlain.id,
             machine_id: machinePlain.machine_id || '',
             machine_name: machinePlain.machine_name || '',
             connected: !!machinePlain.is_connected,
@@ -139,14 +138,11 @@ exports.controlCenter = async (req, res) => {
             networkInfo: machinePlain.network_info || {},
             gpios: machinePlain.gpios || [],
             sequences: machinePlain.sequences || [],
-            primary_sequence_id: machinePlain.primary_sequence_id || 'DB_DEFAULT',
             transactions: recentTransactions || [],
             recentLogs: recentLogs.map(l => ({
                 time: l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : '',
                 message: l.description || ''
             })) || [],
-            test_qr_url: machinePlain.test_qr_url,
-            actual_qr_url: machinePlain.actual_qr_url,
             last_heartbeat: machinePlain.last_heartbeat
         };
 
@@ -174,16 +170,12 @@ exports.toggleGPIO = async (req, res) => {
         const success = socketManager.sendCommand(machine_id, 'toggle_gpio', payload);
 
         if (success) {
-            const description = action
-                ? `Global Action: ${action}`
-                : `Pin ${pin} toggled`;
-
             await MachineLog.create({
                 machine_id,
                 user_id: user ? user.id : null,
                 triggered_by: user ? user.username : 'Unknown',
                 action_type: 'gpio_toggle',
-                description: description,
+                description: `Pin ${pin} set to ${action}`,
                 status: 'success'
             });
         }
@@ -225,55 +217,44 @@ exports.pulseGPIO = async (req, res) => {
 exports.runSequence = async (req, res) => {
     try {
         const { machine_id } = req.params;
-        const { transaction_id, sequence_id } = req.body; // Added sequence_id support
-        const user = req.session.user;
+        const { transaction_id } = req.body; // Added transaction_id
+        const user = req.session.user; // Get user from session
 
-        // Fetch the machine to check its Primary Sequence setting
-        const machine = await Machine.findOne({ where: { machine_id } });
-        if (!machine) return res.status(404).json({ error: 'Machine not found' });
+        const sequences = await MachineSequence.findAll({
+            where: { machine_id },
+            order: [['step_index', 'ASC']]
+        });
 
-        // DETERMINE WHICH SEQUENCE TO RUN
-        // Priority: 
-        // 1. Manually passed sequence_id (from clicking a specific button)
-        // 2. Machine's set Primary Sequence (for transactions)
-        // 3. Fallback to Cloud steps (DB_DEFAULT)
-        const targetSeqId = sequence_id || machine.primary_sequence_id || 'DB_DEFAULT';
-
-        let success = false;
-        let logDescription = "";
-
-        if (targetSeqId === 'DB_DEFAULT') {
-            const sequences = await MachineSequence.findAll({
-                where: { machine_id },
-                order: [['step_index', 'ASC']]
-            });
-            if (sequences.length === 0) return res.status(400).json({ error: 'No cloud sequence defined' });
-            success = socketManager.sendCommand(machine_id, 'run_sequence', { steps: sequences });
-            logDescription = transaction_id ? `Cloud Seq triggered by Tx ${transaction_id}` : 'Manual Cloud Seq Run';
-        } else {
-            // Trigger Local sequence by ID
-            success = socketManager.sendCommand(machine_id, 'run_sequence', { sequence_id: targetSeqId });
-            logDescription = transaction_id ? `Local Seq (${targetSeqId}) triggered by Tx ${transaction_id}` : `Manual Local Seq (${targetSeqId}) Run`;
+        if (sequences.length === 0) {
+            return res.status(400).json({ error: 'No sequence defined for this machine' });
         }
+
+        const success = socketManager.sendCommand(machine_id, 'run_sequence', { steps: sequences });
 
         if (success) {
             await Machine.update({ is_running_sequence: true }, { where: { machine_id } });
 
+            // LOGGING
+            const logDescription = transaction_id
+                ? `Sequence triggered by Transaction ${transaction_id}`
+                : 'Manual sequence run from control panel';
+
             await MachineLog.create({
                 machine_id,
                 user_id: user ? user.id : null,
-                triggered_by: user ? user.username : (transaction_id ? 'Payment Gateway' : 'System'),
+                triggered_by: user ? user.username : 'Manual Operator',
                 action_type: transaction_id ? 'payment_trigger' : 'manual_trigger',
                 description: logDescription,
                 status: 'success',
                 transaction_id: transaction_id || null
             });
 
+            // Update Transaction if applicable
             if (transaction_id) {
                 await Transaction.update({
                     trigger_status: 'processed',
-                    trigger_source: user ? 'manual' : 'webhook',
-                    triggered_by: user ? user.username : 'Payment Gateway',
+                    trigger_source: 'manual', // Assuming manual trigger from control panel for now
+                    triggered_by: user ? user.username : 'Manual Operator',
                     processed_at: new Date()
                 }, {
                     where: { razorpay_payment_id: transaction_id }
@@ -375,8 +356,7 @@ exports.getLogs = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = 20;
         const offset = (page - 1) * limit;
-        const { machine_id, action_type, search } = req.query;
-        const { Op } = require('sequelize');
+        const { machine_id, action_type } = req.query;
 
         let where = {};
         if (req.session.user.role === 'owner') {
@@ -384,43 +364,18 @@ exports.getLogs = async (req, res) => {
                 where: { owner_id: req.session.user.id },
                 attributes: ['machine_id']
             });
-            const ownedIds = ownedMachines.map(m => m.machine_id);
-
-            if (machine_id) {
-                // If filtering by specific machine, ensure it belongs to owner
-                if (ownedIds.includes(machine_id)) {
-                    where.machine_id = machine_id;
-                } else {
-                    where.machine_id = []; // Force no results
-                }
-            } else {
-                where.machine_id = { [Op.in]: ownedIds };
-            }
-        } else if (machine_id) {
-            where.machine_id = machine_id;
+            where.machine_id = ownedMachines.map(m => m.machine_id);
         }
 
+        if (machine_id) where.machine_id = machine_id;
         if (action_type) where.action_type = action_type;
-
-        if (search) {
-            where[Op.or] = [
-                { description: { [Op.like]: `%${search}%` } },
-                { triggered_by: { [Op.like]: `%${search}%` } },
-                { machine_id: { [Op.like]: `%${search}%` } },
-                { action_type: { [Op.like]: `%${search}%` } },
-                // Search in related Machine model
-                { '$Machine.machine_name$': { [Op.like]: `%${search}%` } },
-                { '$Machine.location$': { [Op.like]: `%${search}%` } }
-            ];
-        }
 
         const { count, rows: logs } = await MachineLog.findAndCountAll({
             where,
             include: [{ model: Machine, attributes: ['machine_name', 'location'] }],
             order: [['timestamp', 'DESC']],
             limit,
-            offset,
-            subQuery: false // Required for searching in joined tables with limits
+            offset
         });
 
         res.render('admin/logs', {
@@ -446,23 +401,18 @@ exports.reconnectWifi = async (req, res) => {
 };
 
 exports.otaUpdate = async (req, res) => {
-    const { machine_id } = req.params;
     try {
-        console.log(`[OTA] Request received for machine: ${machine_id}`);
-
-        if (req.session.user.role !== 'admin' && req.session.user.role !== 'owner') {
-            return res.status(403).json({ error: 'Unauthorized: Insufficient permissions for OTA update' });
+        if (req.session.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Unauthorized: Only admins can push OTA updates' });
         }
-
+        const { machine_id } = req.params;
         if (!req.file) {
-            console.error('[OTA] No file found in request');
-            return res.status(400).json({ error: 'No firmware file detected. Please select a .bin file.' });
+            return res.status(400).json({ error: 'No firmware file uploaded' });
         }
 
         let host = req.get('host');
-        console.log(`[OTA] Current Host: ${host}`);
 
-        // Handle localhost/ngrok/production host detection
+        // If developer is on localhost, we MUST use the local IP so ESP32 can reach it
         if (host.includes('localhost') || host.includes('127.0.0.1')) {
             const os = require('os');
             const nets = os.networkInterfaces();
@@ -476,241 +426,13 @@ exports.otaUpdate = async (req, res) => {
             }
         }
 
-        // ESP32 handles http better than https for raw file downloads
-        const protocol = host.includes('zefender.com') ? 'https' : 'http';
-        const firmwareUrl = `${protocol}://${host}/uploads/ota/${req.file.filename}`;
+        const firmwareUrl = `${req.protocol}://${host}/uploads/ota/${req.file.filename}`;
+        console.log(`[OTA] Starting update for ${machine_id} -> ${firmwareUrl}`);
 
-        console.log(`[OTA] Firmware URL generated: ${firmwareUrl}`);
+        const success = socketManager.sendCommand(machine_id, 'ota_update', { url: firmwareUrl });
 
-        const success = socketManager.sendCommand(machine_id, 'ota_update', {
-            url: firmwareUrl,
-            machine_id: machine_id,
-            timestamp: new Date().toISOString()
-        });
-
-        if (success) {
-            console.log(`[OTA] Command successfully emitted to socket for ${machine_id}`);
-            res.json({ success: true, message: 'OTA deployment command sent successfully. Machine should restart within 60 seconds.' });
-        } else {
-            console.warn(`[OTA] Failed to send command: Machine ${machine_id} is currently offline.`);
-            res.status(503).json({ success: false, error: 'Machine is currently offline. Please ensure it is connected before attempting update.' });
-        }
-    } catch (error) {
-        console.error('[OTA] Controller Error:', error);
-        res.status(500).json({ error: 'Internal Server Error: ' + error.message });
-    }
-};
-
-exports.updatePrimarySequence = async (req, res) => {
-    try {
-        const { machine_id } = req.params;
-        const { primary_sequence_id } = req.body;
-
-        await Machine.update({ primary_sequence_id }, { where: { machine_id } });
-
-        res.json({ success: true });
+        res.json({ success, message: success ? 'OTA Command Sent' : 'Machine offline' });
     } catch (error) {
         res.status(500).json({ error: error.message });
-    }
-};
-
-
-exports.exportLogs = async (req, res) => {
-    try {
-        const { machine_id, action_type, search } = req.query;
-        const { Op } = require('sequelize');
-
-        let where = {};
-        if (req.session.user.role === 'owner') {
-            const ownedMachines = await Machine.findAll({
-                where: { owner_id: req.session.user.id },
-                attributes: ['machine_id']
-            });
-            where.machine_id = ownedMachines.map(m => m.machine_id);
-        }
-
-        if (machine_id) where.machine_id = machine_id;
-        if (action_type) where.action_type = action_type;
-
-        if (search) {
-            where[Op.or] = [
-                { description: { [Op.like]: `%${search}%` } },
-                { triggered_by: { [Op.like]: `%${search}%` } }
-            ];
-        }
-
-        const logs = await MachineLog.findAll({
-            where,
-            include: [{ model: Machine, attributes: ['machine_name'] }],
-            order: [['timestamp', 'DESC']],
-            raw: true,
-            nest: true
-        });
-
-        const { Parser } = require('json2csv');
-        const fields = [
-            { label: 'Timestamp', value: 'timestamp' },
-            { label: 'Machine ID', value: 'machine_id' },
-            { label: 'Machine Name', value: 'Machine.machine_name' },
-            { label: 'Action Type', value: 'action_type' },
-            { label: 'Description', value: 'description' },
-            { label: 'Triggered By', value: 'triggered_by' },
-            { label: 'Status', value: 'status' },
-            { label: 'Transaction ID', value: 'transaction_id' }
-        ];
-
-        const json2csvParser = new Parser({ fields });
-        const csv = json2csvParser.parse(logs);
-
-        res.header('Content-Type', 'text/csv');
-        res.attachment(`machine_logs_${Date.now()}.csv`);
-        return res.send(csv);
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error exporting logs: ' + error.message);
-    }
-};
-
-exports.exportLogsXLSX = async (req, res) => {
-    try {
-        const ExcelJS = require('exceljs');
-        const { machine_id, action_type, search } = req.query;
-        const { Op } = require('sequelize');
-
-        let where = {};
-        if (req.session.user.role === 'owner') {
-            const ownedMachines = await Machine.findAll({
-                where: { owner_id: req.session.user.id },
-                attributes: ['machine_id']
-            });
-            where.machine_id = ownedMachines.map(m => m.machine_id);
-        }
-
-        if (machine_id) where.machine_id = machine_id;
-        if (action_type) where.action_type = action_type;
-        if (search) {
-            where[Op.or] = [
-                { description: { [Op.like]: `%${search}%` } },
-                { triggered_by: { [Op.like]: `%${search}%` } }
-            ];
-        }
-
-        const logs = await MachineLog.findAll({
-            where,
-            include: [{ model: Machine, attributes: ['machine_name'] }],
-            order: [['timestamp', 'DESC']]
-        });
-
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('System Logs');
-
-        worksheet.columns = [
-            { header: 'Timestamp', key: 'timestamp', width: 25 },
-            { header: 'Machine ID', key: 'machine_id', width: 20 },
-            { header: 'Machine Name', key: 'machine_name', width: 20 },
-            { header: 'Action Type', key: 'action_type', width: 15 },
-            { header: 'Description', key: 'description', width: 40 },
-            { header: 'Triggered By', key: 'triggered_by', width: 20 },
-            { header: 'Status', key: 'status', width: 10 },
-            { header: 'TX ID', key: 'transaction_id', width: 20 }
-        ];
-
-        logs.forEach(l => {
-            worksheet.addRow({
-                timestamp: l.timestamp,
-                machine_id: l.machine_id,
-                machine_name: l.Machine ? l.Machine.machine_name : 'N/A',
-                action_type: l.action_type,
-                description: l.description,
-                triggered_by: l.triggered_by,
-                status: l.status,
-                transaction_id: l.transaction_id || 'N/A'
-            });
-        });
-
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', `attachment; filename=logs_${Date.now()}.xlsx`);
-        await workbook.xlsx.write(res);
-        res.end();
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error exporting logs XLSX: ' + error.message);
-    }
-};
-
-exports.exportLogsPDF = async (req, res) => {
-    try {
-        const PDFDocument = require('pdfkit');
-        const { machine_id, action_type, search } = req.query;
-        const { Op } = require('sequelize');
-
-        let where = {};
-        if (req.session.user.role === 'owner') {
-            const ownedMachines = await Machine.findAll({
-                where: { owner_id: req.session.user.id },
-                attributes: ['machine_id']
-            });
-            where.machine_id = ownedMachines.map(m => m.machine_id);
-        }
-
-        if (machine_id) where.machine_id = machine_id;
-        if (action_type) where.action_type = action_type;
-        if (search) {
-            where[Op.or] = [
-                { description: { [Op.like]: `%${search}%` } },
-                { triggered_by: { [Op.like]: `%${search}%` } }
-            ];
-        }
-
-        const logs = await MachineLog.findAll({
-            where,
-            include: [{ model: Machine, attributes: ['machine_name'] }],
-            order: [['timestamp', 'DESC']]
-        });
-
-        const doc = new PDFDocument({ margin: 30, size: 'A4' });
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=logs_${Date.now()}.pdf`);
-
-        doc.pipe(res);
-        doc.fontSize(20).text('System Activity Logs', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, { align: 'center' });
-        doc.moveDown(2);
-
-        const startX = 30;
-        let currentY = doc.y;
-
-        doc.fontSize(10).font('Helvetica-Bold');
-        doc.text('Time', startX, currentY);
-        doc.text('Machine', startX + 130, currentY);
-        doc.text('Action', startX + 230, currentY);
-        doc.text('Triggered By', startX + 330, currentY);
-        doc.text('Status', startX + 480, currentY);
-
-        doc.moveDown();
-        doc.strokeColor('#aaaaaa').lineWidth(1).moveTo(startX, doc.y).lineTo(560, doc.y).stroke();
-        doc.moveDown(0.5);
-
-        doc.font('Helvetica').fontSize(8);
-        logs.forEach(l => {
-            if (doc.y > 750) doc.addPage();
-            currentY = doc.y;
-            doc.text(new Date(l.timestamp).toLocaleString(), startX, currentY);
-            doc.text(l.Machine ? l.Machine.machine_name.substring(0, 15) : l.machine_id.substring(0, 15), startX + 130, currentY);
-            doc.text(l.action_type.substring(0, 15), startX + 230, currentY);
-            doc.text(l.triggered_by.substring(0, 20), startX + 330, currentY);
-            doc.text(l.status, startX + 480, currentY);
-            doc.moveDown();
-            doc.fontSize(7).fillColor('#666666').text(`Desc: ${l.description.substring(0, 100)}`, startX + 20, currentY + 10);
-            doc.fillColor('#000000').fontSize(8);
-            doc.moveDown(0.5);
-        });
-
-        doc.end();
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error exporting logs PDF: ' + error.message);
     }
 };

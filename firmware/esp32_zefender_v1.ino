@@ -22,15 +22,24 @@
 #include <esp_wifi.h>
 
 // ====================== CONFIGURATION ======================
-#define WIFI_SSID       "SPK"
-#define WIFI_PASSWORD   "Spk@0209"
+#define WIFI_SSID       "PM"
+#define WIFI_PASSWORD   "123456789"
+
+// Stepper Motor Pins
+#define STEP_PIN 26
+#define DIR_PIN 25
+
+bool stepperRunning = false;
+unsigned long lastStepTime = 0;
+bool stepState = false;
+const unsigned long stepInterval = 60; // ~5 RPM
 
 // Server Connection
 char host[] = "admin.zefender.com"; 
 int port = 80;
 char path[] = "/socket.io/?transport=websocket"; // Force WebSocket for stability
 
-#define MACHINE_ID      "RNSIT_01"
+#define MACHINE_ID      "HEL_02"
 #define OTA_PASS        "Healthmet@123"
 
 // Pin Definitions
@@ -78,9 +87,20 @@ std::vector<PinConfig> pinConfigs;
 
 void initDefaultPins() {
     pinConfigs.clear();
-    int defaults[] = {4, 5, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33};
+    int defaults[] = {2,4, 5, 15,16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33};
     for(int p : defaults) {
         pinConfigs.push_back({p, true}); // Default Active Low
+    }
+}
+
+void rotateStepperBackground() {
+    if (!stepperRunning) return;
+
+    unsigned long now = millis();
+    if (now - lastStepTime >= stepInterval) {
+        lastStepTime = now;
+        stepState = !stepState;
+        digitalWrite(STEP_PIN, stepState ? HIGH : LOW);
     }
 }
 
@@ -91,22 +111,47 @@ bool pinIsActiveLow(int pin) {
     return true; 
 }
 
-void relayOn(int pin)  { 
-    if (pin > 0) {
-        bool isLow = pinIsActiveLow(pin);
-        pinMode(pin, OUTPUT); 
-        digitalWrite(pin, isLow ? LOW : HIGH); 
-        logPrint("📍 Pin " + String(pin) + " ON");
+void relayOn(int pin) {
+
+    if(pin == STEP_PIN){
+        stepperRunning = true;
+        logPrint("Stepper START");
+        return;
     }
+
+    if(pin == DIR_PIN){
+        digitalWrite(DIR_PIN, HIGH);
+        logPrint("Stepper DIR HIGH");
+        return;
+    }
+
+    bool isLow = pinIsActiveLow(pin);
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, isLow ? LOW : HIGH);
+
+    logPrint("Pin "+String(pin)+" ON");
 }
 
-void relayOff(int pin) { 
-    if (pin > 0) {
-        bool isLow = pinIsActiveLow(pin);
-        pinMode(pin, OUTPUT);
-        digitalWrite(pin, isLow ? HIGH : LOW); 
-        logPrint("📍 Pin " + String(pin) + " OFF");
+void relayOff(int pin) {
+
+    if(pin == STEP_PIN){
+        stepperRunning = false;
+        digitalWrite(STEP_PIN,LOW);
+        logPrint("Stepper STOP");
+        return;
     }
+
+    if(pin == DIR_PIN){
+        digitalWrite(DIR_PIN,LOW);
+        logPrint("Stepper DIR LOW");
+        return;
+    }
+
+    bool isLow = pinIsActiveLow(pin);
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, isLow ? HIGH : LOW);
+
+    logPrint("Pin "+String(pin)+" OFF");
 }
 
 void buzzerOn()  { relayOn(BUZZER_PIN); }
@@ -441,8 +486,10 @@ void setup() {
 void loop() {
     // 1. HARDWARE PRIORITY: Always Service Engine & Pulses FIRST
     // This ensures pumps/sequences never freeze even if WiFi dies
+    rotateStepperBackground();
     engine.update();
     updatePulses();
+    
 
     // 2. WiFi Auto-Recovery (Non-Blocking)
     if (WiFi.status() != WL_CONNECTED) {

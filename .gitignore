@@ -35,3 +35,6 @@ temp/
 # Build files
 dist/
 build/
+
+# Scratch / one-off debug scripts
+scratch/
